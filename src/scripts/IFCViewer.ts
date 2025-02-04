@@ -222,8 +222,12 @@ async function Initialize(): Promise<void> {
     }
 
     function ScaleTransformControls() {
-        var distance = transformControls.position.distanceTo(world.camera.three.position);
-        transformControls.scale.setScalar(distance + 2);
+        if(world.camera.projection.current == 'Orthographic') {
+            transformControls.scale.setScalar(45 / world.camera.threeOrtho.zoom);
+        } else {
+            var distance = transformControls.position.distanceTo(world.camera.three.position);
+            transformControls.scale.setScalar(distance + 2);
+        } 
     }
 
     function InitializeTools() {
