@@ -1,2 +1,2 @@
-# IFC-Model-Viewer
+# IFC Model Viewer
 Het bekijken en inspecteren van IFC modellen
