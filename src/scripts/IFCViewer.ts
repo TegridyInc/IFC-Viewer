@@ -28,6 +28,11 @@ const modelsWindowHeader = document.getElementById('models-header');
 const closeModelsManager = document.getElementById('close-models-window');
 const openModelsManager = document.getElementById('open-model-manager')
 
+const propertyTree = document.getElementById('property-tree');
+const propertyTreeContainer = document.getElementById('property-tree-container')
+const propertyTreeHeader = document.getElementById('property-tree-header');
+const closePropertyTree = document.getElementById('close-property-tree')
+
 const properties = document.getElementById('properties')
 const propertiesHeader = document.getElementById('properties-header')  
 const closeProperties = document.getElementById('close-properties')
@@ -300,6 +305,13 @@ async function Initialize(): Promise<void> {
 
         closeProperties.addEventListener("click", () => properties.style.visibility = "hidden");
         openProperties.addEventListener('click', () => properties.style.visibility = 'visible')
+
+        const propertyWindow = function (e:MouseEvent) { MoveWindow(e, propertyTree)}
+        
+        propertyTreeHeader.addEventListener("mousedown", () => document.addEventListener("mousemove", propertyWindow))
+        document.addEventListener("mouseup", () => document.removeEventListener("mousemove", propertyWindow))
+
+        closePropertyTree.addEventListener('click', () => propertyTree.style.visibility = 'hidden')
     }
 
     function InitializeComponents() {
@@ -504,6 +516,198 @@ async function LoadIFCModel(arrayBuffer: ArrayBuffer, name: string): Promise<FRA
         modelItem.append(exportModel)
 
         const modelPropertyTree = document.createElement('i');
+        modelPropertyTree.addEventListener('click', async ()=> {
+            ClearPropertyTree();
+            propertyTree.style.visibility = 'visible'
+            const props = webIfc.properties;
+            const properties = model.getLocalProperties();
+            const spatialStructure = await props.getSpatialStructure(modelID);
+
+            for(const id in properties) {
+                const property = properties[id];
+
+                if(!webIfc.IsIfcElement(property.type))
+                    continue;
+
+                if(!((property instanceof WEBIFC.IFC2X3.IfcBuildingElement) ||  (property instanceof WEBIFC.IFC4.IfcBuildingElement) || (property instanceof WEBIFC.IFC4X3.IfcBuiltElement)))
+                    continue;
+                
+                const container = CreateFoldout(property.Name.value, propertyTreeContainer);
+                
+                await CreateAttributesFoldout(property, container);
+                await CreateMaterialFoldout(property, container);
+                await CreatePropertySetsFoldout(property, container)
+                await CreateSpatialElementFoldout(property, container);   
+            }
+
+            async function CreateAttributesFoldout(property: { [attribute: string]:any }, container:HTMLElement) {
+                const attributesFoldout = CreateFoldout('Attributes', container);
+                      
+                CreateFoldoutElement('Class', webIfc.GetNameFromTypeCode(property.type), attributesFoldout)  
+                
+                const objectPlacement = await props.getItemProperties(modelID, property.ObjectPlacement.value);
+                const relativePlacement = await props.getItemProperties(modelID, objectPlacement.RelativePlacement.value)
+                const location = await props.getItemProperties(modelID, relativePlacement.Location.value);
+
+                CreateFoldoutElement('Location', "X: " + location.Coordinates['0'].value + " Y: " + location.Coordinates['1'].value + " Z: " + location.Coordinates['2'].value , attributesFoldout);
+
+                if(property.ObjectType)
+                    CreateFoldoutElement('Object Type', property.ObjectType.value, attributesFoldout);
+            }
+
+            async function CreateMaterialFoldout(property: { [attribute: string]:any }, container:HTMLElement) {
+                const materials = await props.getMaterialsProperties(modelID, property.expressID);
+                materials.forEach(async materialProperty => {
+                    if(materialProperty.ForLayerSet) {
+                        const layerSet = await model.getProperties(materialProperty.ForLayerSet.value);
+                        const layerSetContainer = CreateFoldout('Layers', container);
+                        
+                        for(const layerHandle in layerSet.MaterialLayers) {
+                            const layer = await model.getProperties(layerSet.MaterialLayers[layerHandle].value);
+                            const layerContainer = CreateFoldout('Layer', layerSetContainer)
+                            
+                            if(layer.LayerThickness)
+                                CreateFoldoutElement('Layer Thickness', layer.LayerThickness.value, layerContainer)
+                            
+                            if(layer.Material) {
+                                const material = await model.getProperties(layer.Material.value);
+                                CreateFoldoutElement('Material', material.Name.value, layerContainer);
+                            } else {
+                                CreateFoldoutElement('Material', 'Undefined', layerContainer)
+                            }
+                        }
+                    } else if(materialProperty.Materials) {
+                        const materialsContainer = CreateFoldout('Materials', container)
+                        for(const materialHandle in materialProperty.Materials) {
+                            const material = await model.getProperties(materialProperty.Materials[materialHandle].value);
+                            CreateFoldoutElement(material.Name.value, undefined, materialsContainer);
+                        }
+                    }
+                    else 
+                        CreateFoldoutElement('Material', materialProperty.Name.value, container);
+                })
+            }
+
+            async function CreatePropertySetsFoldout(property: { [attribute: string]:any }, container:HTMLElement) {
+                const propertySets = await props.getPropertySets(modelID, property.expressID);
+                if(propertySets.length != 0) {
+                    const propertySetsContainer = CreateFoldout('Property Sets', container);
+                    propertySets.forEach(async propertySet => {
+                        const propertySetFoldout = CreateFoldout(propertySet.Name.value, propertySetsContainer);
+                        for(const Handle in propertySet.HasProperties) {
+                            const singleValue = await model.getProperties(propertySet.HasProperties[Handle].value);
+                            if(!singleValue.NominalValue)
+                                return;
+                           
+                            CreateFoldoutElement(singleValue.Name.value, singleValue.NominalValue.value + (singleValue.Unit ? " " + singleValue.Unit.value : ""), propertySetFoldout);
+                        }
+                    })
+                }
+            }
+
+            async function CreateSpatialElementFoldout(property: { [attribute: string]:any }, container:HTMLElement) {
+                const spatialElementID = GetSpatialElement(spatialStructure, property.expressID);
+                const spatialElement = await model.getProperties(spatialElementID);
+
+                if(spatialElement) {
+                    const spatialElementContainer = CreateFoldout('Spatial Element', container);
+                    CreateFoldoutElement('Name', spatialElement.Name.value, spatialElementContainer);
+
+                    if(spatialElement.Elevation)
+                        CreateFoldoutElement('Elevation', spatialElement.Elevation.value, spatialElementContainer)
+                }
+            }
+
+            function CreateFoldout(name: string, parent:HTMLElement): HTMLElement {
+                const foldout = document.createElement('div');
+                foldout.classList.add('foldout')
+                parent.append(foldout)
+
+                const foldoutHeader = document.createElement('div')
+                foldoutHeader.classList.add('foldout-header')
+                foldout.append(foldoutHeader)
+                
+                const foldoutButton = document.createElement('i')
+                foldoutButton.addEventListener('click', (e)=> {
+                    if(e.button != 0)
+                        return;
+
+                    foldoutButton.classList.toggle('arrow-open')
+                    foldoutContainer.classList.toggle('foldout-container-open');
+                    
+                    foldoutContainer.style.height = foldoutButton.classList.contains('arrow-open') ? (foldoutContainer.scrollHeight + 'px') : ('0px')
+                })
+                foldoutButton.innerHTML = 'arrow_forward_ios'
+                foldoutButton.classList.add('arrow', 'material-symbols-outlined', 'unselectable')
+                foldoutHeader.append(foldoutButton);
+                
+                const foldoutName = document.createElement('div')
+                foldoutName.innerHTML = name;
+                foldoutName.classList.add('foldout-name')
+                foldoutHeader.append(foldoutName)
+
+                const foldoutContainer = document.createElement('div');
+                foldoutContainer.classList.add('foldout-container');
+                foldout.append(foldoutContainer);
+
+                if(parent.classList.contains('foldout-container')) 
+                    foldoutContainer.ontransitionend = () => {
+                        var height = 0;
+                        parent.childNodes.forEach(child => height += (child as HTMLElement).offsetHeight)
+                        parent.style.height = height + 'px';
+                    }
+
+                return foldoutContainer;
+            }
+
+            function CreateFoldoutElement(label:string, value?:any, parent?:HTMLElement) {
+                const foldoutElement = document.createElement('div');
+                foldoutElement.classList.add('foldout-element')
+
+                const foldoutLabel = document.createElement('div')
+                foldoutLabel.innerHTML = ' - ' + label;
+                foldoutLabel.classList.add('foldout-label')
+                foldoutElement.append(foldoutLabel)
+
+                if(value != undefined && value != null) {
+                    const foldoutValue = document.createElement('div');
+                    foldoutValue.innerHTML = value.toString();
+                    foldoutValue.classList.add('foldout-value')
+                    foldoutElement.append(foldoutValue)
+                }
+
+                if(parent) {
+                    parent.append(foldoutElement)
+                }
+
+            }
+
+            function ClearPropertyTree() {
+                for(var i = propertyTreeContainer.children.length - 1; i >= 0; i--) {
+                    if(propertyTreeContainer.children.item(i).classList.contains('foldout'))
+                        propertyTreeContainer.removeChild(propertyTreeContainer.children.item(i));
+                }
+            }
+
+            function GetSpatialElement(spatialStructure:any, id:number) : number | null {
+                if(!spatialStructure.children)
+                    return null;
+
+                for(const child in spatialStructure.children) {
+                    if(spatialStructure.children[child].expressID == id)
+                        return spatialStructure.expressID;
+                    else {
+                        const result = GetSpatialElement(spatialStructure.children[child], id);
+                        if(result) 
+                            return result;
+                        
+                        continue;
+                    }
+                }
+
+                return null;
+            }
+        })
         modelPropertyTree.title = 'Property Tree'
         modelPropertyTree.classList.add('model-property-tree', 'material-symbols-outlined', 'unselectable')
         modelPropertyTree.innerHTML = 'list'
