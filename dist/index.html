@@ -138,10 +138,6 @@
             border-color: white;
         }
 
-        .close-window {
-           
-        }
-
         .model-manager {
             align-content: center;
             padding-left: 5px;
@@ -173,17 +169,9 @@
             margin-right: auto;
         }
 
-        .model-property-tree {
-        }
-
-        .model-hide {
-        }
-
-        .model-delete {
-        }
-
         #properties {
             position: absolute;
+            visibility: hidden;
             display: flex;
             flex-direction: column;
             top: 10%;
@@ -207,10 +195,6 @@
             flex-direction: row;
             font-size: 80%;
             padding: 0px 5px 0px 5px;
-        }
-
-        .property-title {
-        
         }
 
         .property-value {
@@ -274,9 +258,6 @@
             transition: height .1s;
         }
 
-        .foldout-container-open {
-        }
-
         .foldout-element {
             padding:5px 0px 5px 0px;
             display: flex;
@@ -323,20 +304,6 @@
         <div class="window-header unselectable" id="properties-header">
             Properties
             <i class="unselectable material-symbols-outlined close-window" id="close-properties">close</i>
-        </div>
-        <div class="part">
-            Slab
-            <div class="property">
-                <div class="property-title">Name</div>
-                <div class="property-value">IFC Model</div>
-            </div>
-        </div>
-        <div class="part">
-            Door
-            <div class="property">
-                <div class="property-title">Name</div>
-                <div class="property-value">small</div>
-            </div>
         </div>
     </div>
 

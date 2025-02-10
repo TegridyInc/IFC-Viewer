@@ -7,8 +7,6 @@ import * as WEBIFC from 'web-ifc'
 import * as FBX from 'three/examples/jsm/loaders/FBXLoader';
 import * as EXCELJS from 'exceljs'
 import * as THREE from 'three';
-import * as Router from 'routerjs'
-import { forEach } from 'lodash';
 
 // Variables
 const container = document.getElementById('container');
@@ -52,6 +50,13 @@ const propsManager = components.get(COM.IfcPropertiesManager);
 const highlighter = components.get(OBF.Highlighter);
 
 const webIfc = new WEBIFC.IfcAPI();
+const cameraFitting = {
+    cover: false,
+    paddingLeft: 5,
+    paddingRight: 5,
+    paddingBottom: 5,
+    paddingTop: 5,
+};
 
 var grid: COM.SimpleGrid;
 var caster: COM.SimpleRaycaster;
@@ -75,38 +80,16 @@ enum Tools {
 Initialize();
 
 async function Initialize(): Promise<void> {
-    document.addEventListener('keydown', (e) => {
-        if (e.key == 'f') {
-            if (!selectedModel)
-                return;
-
-            fragmentBbox.dispose();
-            fragmentBbox.reset();
-            fragmentBbox.add(selectedModel as FRA.FragmentsGroup);
-
-            const box3 = fragmentBbox.get();
-            world.camera.controls.fitToBox(box3, true, { paddingBottom: 5, paddingLeft: 5, paddingRight: 5, paddingTop: 5 }).then(ScaleTransformControls);
-        }
-    })
-
     InitializeTransformControls();
     InitializeComponents();
     InitializeTools();
     InitializeInputs();
     InitializeWindows();
 
-    highlighter.events.select.onClear.add(ClearParts)
-    highlighter.events.select.onBeforeHighlight.add(ClearParts);
-
     webIfc.SetWasmPath("https://unpkg.com/web-ifc@0.0.66/", true);
     await webIfc.Init();
 
-    function ClearParts() {
-        const parts = properties.getElementsByClassName('part')
-        for (var i = parts.length - 1; i >= 0; i--) {
-            parts.item(i).remove();
-        }
-    }
+    
 
     function InitializeTransformControls() {
         container.addEventListener('mousedown', () => {
@@ -125,7 +108,6 @@ async function Initialize(): Promise<void> {
 
         const fbxLoader = new FBX.FBXLoader();
         fbxLoader.load('./Assets/Transform Controls.fbx', (model) => {
-            var center: THREE.Mesh;
             model.children.forEach(child => {
                 const mesh = child as THREE.Mesh;
                 if (mesh) {
@@ -139,8 +121,6 @@ async function Initialize(): Promise<void> {
                     leftControl = mesh;
                 else if (mesh.name == 'FORWARD')
                     forwardControl = mesh;
-                else
-                    center = mesh;
             })
 
             world.scene.three.add(model)
@@ -253,6 +233,20 @@ async function Initialize(): Promise<void> {
             transformControls.visible = false;
             selectedModel = null;
         })
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key == 'f') {
+                if (!selectedModel)
+                    return;
+    
+                fragmentBbox.dispose();
+                fragmentBbox.reset();
+                fragmentBbox.add(selectedModel as FRA.FragmentsGroup);
+    
+                const box3 = fragmentBbox.get();
+                world.camera.controls.fitToBox(box3, true, cameraFitting).then(ScaleTransformControls);
+            }
+        })
     }
 
     function InitializeInputs() {
@@ -300,6 +294,14 @@ async function Initialize(): Promise<void> {
 
         const propertiesWindow = function (e: MouseEvent) { MoveWindow(e, properties) };
 
+        function ClearParts() {
+            const parts = properties.getElementsByClassName('part')
+            for (var i = parts.length - 1; i >= 0; i--) {
+                parts.item(i).remove();
+            }
+        }
+        highlighter.events.select.onClear.add(ClearParts)
+        highlighter.events.select.onBeforeHighlight.add(ClearParts);
         propertiesHeader.addEventListener("mousedown", () => document.addEventListener("mousemove", propertiesWindow))
         document.addEventListener("mouseup", () => document.removeEventListener("mousemove", propertiesWindow))
 
@@ -366,30 +368,24 @@ async function LoadIFCModel(arrayBuffer: ArrayBuffer, name: string): Promise<FRA
     const material = modelBB.material as THREE.MeshBasicMaterial;
     material.wireframe = true;
     
-    world.camera.controls.fitToBox(modelBB, true, { paddingBottom: 5, paddingLeft: 5, paddingRight: 5, paddingTop: 5 });
+    world.camera.controls.fitToBox(modelBB, true, cameraFitting);
     model.add(modelBB);
 
     fragmentBbox.dispose();
-    //GenerateClippingPlanes();
     world.scene.three.add(model);
     model.name = name;
 
-    selectTool.addEventListener('click', () => {
-        modelBB.visible = false;
-    })
-   
-    AddModelToManager();
-
+    selectTool.addEventListener('click', () => modelBB.visible = false)
+    
     const indexer = components.get(COM.IfcRelationsIndexer);
     await indexer.process(model);
-
+    
     highlighter.events.select.onHighlight.add(async fragmentIdMap => {
         var currentID = -1;
         for (const fragmentID in fragmentIdMap) {
             fragmentIdMap[fragmentID].forEach(async propertyID => {
                 if (currentID == -1) {
                     currentID = propertyID;
-                    console.log(model.getLocalProperties())
                     const properties = await model.getProperties(propertyID);
                     if (!properties)
                         return;
@@ -410,110 +406,18 @@ async function LoadIFCModel(arrayBuffer: ArrayBuffer, name: string): Promise<FRA
         }
     })
 
+    AddModelToManager();
     return model;
-
-    function GenerateClippingPlanes(): void {
-        const bbox = fragmentBbox.getMesh();
-        bbox.geometry.computeBoundingBox();
-
-        const xPlane = clipper.createFromNormalAndCoplanarPoint(world, new THREE.Vector3(-1, 0, 0), new THREE.Vector3(bbox.geometry.boundingBox.max.x + 20, 0, 0));
-        xPlane.helper.scale.set(bbox.geometry.boundingBox.max.z / 2, bbox.geometry.boundingBox.max.y / 2, 1);
-        xPlane.helper.position.add(new THREE.Vector3(0, bbox.geometry.boundingBox.max.y, 0));
-
-        const yPlane = clipper.createFromNormalAndCoplanarPoint(world, new THREE.Vector3(0, -1, 0), new THREE.Vector3(0, bbox.geometry.boundingBox.max.y + 20, 0));
-        yPlane.helper.scale.set(bbox.geometry.boundingBox.max.x / 2, bbox.geometry.boundingBox.max.z / 2, 1);
-
-        const zPlane = clipper.createFromNormalAndCoplanarPoint(world, new THREE.Vector3(0, 0, -1), new THREE.Vector3(0, 0, bbox.geometry.boundingBox.max.z + 20));
-        zPlane.helper.scale.set(bbox.geometry.boundingBox.max.x / 2, bbox.geometry.boundingBox.max.y / 2, 1);
-        zPlane.helper.position.add(new THREE.Vector3(0, bbox.geometry.boundingBox.max.y, 0));
-    }
 
     function AddModelToManager() {
         const modelItem = document.createElement('div');
         modelItem.classList.add("model-item")
         models.append(modelItem);
 
-
         const modelName = document.createElement('div');
         modelName.innerHTML = model.name;
         modelName.classList.add("model-name")
         modelItem.append(modelName);
-
-        const exportModel = document.createElement('i');
-        exportModel.addEventListener('click', async () => {
-            const exported = await exporter.export(webIfc, modelID);
-            const workbook = new EXCELJS.Workbook();
-            const worksheet = workbook.addWorksheet();
-
-            interface Data {
-                type: number;
-                name: string;
-                amount: number;
-            }
-            var excelData: Data[] = [];
-
-            for (const value in exported) {
-                const type = exported[value].type;
-
-                if (webIfc.IsIfcElement(type)) {
-                    var typeFound = false;
-                    excelData.forEach(child => {
-                        if (child.type == type) {
-                            child.amount++;
-                            typeFound = true;
-                        }
-                    });
-                    if (!typeFound) {
-                        excelData.push({type: type as number, name: Object.getPrototypeOf(exported[value]) as string, amount: 1});
-                    }
-                }
-                  
-            }
-
-            var rows: any[][] = [];
-            
-
-            excelData.forEach(child => {
-                rows.push([child.name as string, child.amount ]);
-            }) 
-
-            console.log(rows)
-            worksheet.name = 'IFC'
-            
-
-            worksheet.addTable({
-                name: 'MyTable',
-                ref: 'A1',
-                headerRow: true,
-                totalsRow: true,
-                style: {
-                    theme: 'TableStyleDark3',
-                    showRowStripes: true,
-                },
-                columns: [
-                    { name: 'Type' },
-                    { name: 'Amount' },
-                ],
-                rows: rows
-            });
-
-            const file = new File([new Blob([await workbook.xlsx.writeBuffer()])], "sheet.xlsx");
-            const url = URL.createObjectURL(file);
-            const link = document.createElement("a");
-            link.download = "sheet.xlsx";
-            link.href = url;
-            link.click();
-            URL.revokeObjectURL(url);
-            link.remove();
-
-           // const stream = fs.createWriteStream('./');
-           //workbook.xlsx.write(stream)
-
-        })
-        exportModel.title = 'Export Model';
-        exportModel.classList.add('export-model', 'material-symbols-outlined', 'unselectable')
-        exportModel.innerHTML = 'file_export';
-        modelItem.append(exportModel)
 
         const modelPropertyTree = document.createElement('i');
         modelPropertyTree.addEventListener('click', async ()=> {
@@ -676,10 +580,7 @@ async function LoadIFCModel(arrayBuffer: ArrayBuffer, name: string): Promise<FRA
                     foldoutElement.append(foldoutValue)
                 }
 
-                if(parent) {
-                    parent.append(foldoutElement)
-                }
-
+                parent?.append(foldoutElement);
             }
 
             function ClearPropertyTree() {
@@ -754,7 +655,6 @@ async function LoadIFCModel(arrayBuffer: ArrayBuffer, name: string): Promise<FRA
         part.innerHTML = data.Name.value;
         part.classList.add('part')
         properties.append(part)
-        console.log(data)
 
         for (const prop in data) {
             if(data[prop]&& data[prop].value)
@@ -780,8 +680,3 @@ async function LoadIFCModel(arrayBuffer: ArrayBuffer, name: string): Promise<FRA
         }
     }
 }
-
-/*
-
-                
-*/
