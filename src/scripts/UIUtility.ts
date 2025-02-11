@@ -58,3 +58,38 @@ export function CreateFoldoutElement(label:string, value?:any, parent?:HTMLEleme
 
     parent?.append(foldoutElement);
 }
+
+export function CreateWindow(name:string, parent:HTMLElement) : [HTMLElement, HTMLElement] {
+    const window = document.createElement('div');
+    window.classList.add('window');
+    parent.append(window);
+
+    const windowHeader = document.createElement('div');
+    windowHeader.classList.add('window-header');
+    window.append(windowHeader);
+
+    const moveWindowFunc = function(e:MouseEvent){
+        window.style.top = `${window.offsetTop + e.movementY}px`;
+        window.style.left = `${window.offsetLeft + e.movementX}px`;
+    };
+    windowHeader.addEventListener("mousedown", () => document.addEventListener("mousemove", moveWindowFunc))
+    document.addEventListener("mouseup", () => document.removeEventListener("mousemove", moveWindowFunc))
+
+    const windowLabel = document.createElement('div');
+    windowLabel.innerHTML = name;
+    windowLabel.classList.add('window-label', 'unselectable');
+    windowHeader.append(windowLabel);
+
+    const windowClose = document.createElement('i');
+    windowClose.innerHTML = 'close';
+    windowClose.classList.add('window-close', 'material-symbols-outlined', 'unselectable');
+    windowHeader.append(windowClose);
+
+    windowClose.addEventListener('click', () => window.style.visibility = 'hidden')
+    
+    const windowContainer = document.createElement('div');
+    windowContainer.classList.add('window-container');
+    window.append(windowContainer);
+
+    return [window, windowContainer];
+}

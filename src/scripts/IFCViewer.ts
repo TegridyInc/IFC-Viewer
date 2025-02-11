@@ -21,22 +21,13 @@ const fileUpload = document.getElementById('ifc-file-upload') as HTMLInputElemen
 const projection = document.getElementById('projection') as HTMLSelectElement;
 
 // Windows
+var modelManagerContainer :HTMLElement;
+const openModelManager = document.getElementById('open-model-manager')
 
-const models = document.getElementById('models');
-const modelsContainer = models.getElementsByClassName('window-container').item(0) as HTMLElement;
-const modelsWindowHeader = document.getElementById('models-header');
-const closeModelsManager = document.getElementById('close-models-window');
-const openModelsManager = document.getElementById('open-model-manager')
+var propertyTree: HTMLElement
+var propertyTreeContainer: HTMLElement;
 
-const propertyTree = document.getElementById('property-tree');
-const propertyTreeContainer = document.getElementById('property-tree-container')
-const propertyTreeHeader = document.getElementById('property-tree-header');
-const closePropertyTree = document.getElementById('close-property-tree')
-
-const properties = document.getElementById('properties')
-const propertiesContainer = properties.getElementsByClassName('window-container').item(0) as HTMLElement
-const propertiesHeader = document.getElementById('properties-header')  
-const closeProperties = document.getElementById('close-properties')
+var propertiesContainer: HTMLElement;
 const openProperties = document.getElementById('open-properties');
 
 // Components
@@ -281,41 +272,27 @@ async function Initialize(): Promise<void> {
     }
 
     function InitializeWindows() {
-        function MoveWindow(e : MouseEvent, window: HTMLElement) {
-            window.style.top = `${window.offsetTop + e.movementY}px`;
-            window.style.left = `${window.offsetLeft + e.movementX}px`;
-        }
-
-        const modelsWindow = function (e:MouseEvent) { MoveWindow(e, models) };
-
-        modelsWindowHeader.addEventListener("mousedown", () => document.addEventListener("mousemove", modelsWindow))
-        document.addEventListener("mouseup", () => document.removeEventListener("mousemove", modelsWindow))
-
-        closeModelsManager.addEventListener("click", () => models.style.visibility = "hidden");
-        openModelsManager.addEventListener("click", () => models.style.visibility = "visible");
-
-        const propertiesWindow = function (e: MouseEvent) { MoveWindow(e, properties) };
+        const modelManagerWindow = UIUtility.CreateWindow('Model Manager', document.body);
+        modelManagerContainer = modelManagerWindow[1];
+        openModelManager.addEventListener('click', () => modelManagerWindow[0].style.visibility = 'visible')
 
         function ClearParts() {
-            const parts = properties.getElementsByClassName('part')
+            const parts = propertiesContainer.getElementsByClassName('part')
             for (var i = parts.length - 1; i >= 0; i--) {
                 parts.item(i).remove();
             }
         }
         highlighter.events.select.onClear.add(ClearParts)
         highlighter.events.select.onBeforeHighlight.add(ClearParts);
-        propertiesHeader.addEventListener("mousedown", () => document.addEventListener("mousemove", propertiesWindow))
-        document.addEventListener("mouseup", () => document.removeEventListener("mousemove", propertiesWindow))
-
-        closeProperties.addEventListener("click", () => properties.style.visibility = "hidden");
-        openProperties.addEventListener('click', () => properties.style.visibility = 'visible')
-
-        const propertyWindow = function (e:MouseEvent) { MoveWindow(e, propertyTree)}
         
-        propertyTreeHeader.addEventListener("mousedown", () => document.addEventListener("mousemove", propertyWindow))
-        document.addEventListener("mouseup", () => document.removeEventListener("mousemove", propertyWindow))
+        const propertiesWindow = UIUtility.CreateWindow('Properties', document.body);
+        propertiesContainer = propertiesWindow[1];
+        openProperties.addEventListener('click', () => propertiesWindow[0].style.visibility = 'visible')
 
-        closePropertyTree.addEventListener('click', () => propertyTree.style.visibility = 'hidden')
+        const propertyTreeWindow = UIUtility.CreateWindow('Property Tree', document.body);
+        propertyTree = propertyTreeWindow[0];
+        propertyTreeContainer = propertyTreeWindow[1];
+        
     }
 
     function InitializeComponents() {
@@ -414,7 +391,7 @@ async function LoadIFCModel(arrayBuffer: ArrayBuffer, name: string): Promise<FRA
     function AddModelToManager() {
         const modelItem = document.createElement('div');
         modelItem.classList.add("model-item")
-        modelsContainer.append(modelItem);
+        modelManagerContainer.append(modelItem);
 
         const modelName = document.createElement('div');
         modelName.innerHTML = model.name;
@@ -583,7 +560,7 @@ async function LoadIFCModel(arrayBuffer: ArrayBuffer, name: string): Promise<FRA
                 boundingBoxes.splice(index, 1);
             }
 
-            models.removeChild(modelItem);
+            modelManagerContainer.removeChild(modelItem);
         });
         deleteModel.title = 'Delete'
         deleteModel.classList.add('model-delete', 'material-symbols-outlined', 'unselectable', 'small-button')
