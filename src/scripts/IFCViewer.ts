@@ -7,6 +7,7 @@ import * as WEBIFC from 'web-ifc'
 import * as FBX from 'three/examples/jsm/loaders/FBXLoader';
 import * as EXCELJS from 'exceljs'
 import * as THREE from 'three';
+import * as UIUtility from './UIUtility'
 
 // Variables
 const container = document.getElementById('container');
@@ -437,7 +438,7 @@ async function LoadIFCModel(arrayBuffer: ArrayBuffer, name: string): Promise<FRA
                 if(!((property instanceof WEBIFC.IFC2X3.IfcBuildingElement) ||  (property instanceof WEBIFC.IFC4.IfcBuildingElement) || (property instanceof WEBIFC.IFC4X3.IfcBuiltElement)))
                     continue;
                 
-                const container = CreateFoldout(property.Name.value, propertyTreeContainer);
+                const container = UIUtility.CreateFoldout(property.Name.value, propertyTreeContainer);
                 
                 await CreateAttributesFoldout(property, container);
                 await CreateMaterialFoldout(property, container);
@@ -446,18 +447,18 @@ async function LoadIFCModel(arrayBuffer: ArrayBuffer, name: string): Promise<FRA
             }
 
             async function CreateAttributesFoldout(property: { [attribute: string]:any }, container:HTMLElement) {
-                const attributesFoldout = CreateFoldout('Attributes', container);
+                const attributesFoldout =  UIUtility.CreateFoldout('Attributes', container);
                       
-                CreateFoldoutElement('Class', webIfc.GetNameFromTypeCode(property.type), attributesFoldout)  
+                UIUtility.CreateFoldoutElement('Class', webIfc.GetNameFromTypeCode(property.type), attributesFoldout)  
                 
                 const objectPlacement = await props.getItemProperties(modelID, property.ObjectPlacement.value);
                 const relativePlacement = await props.getItemProperties(modelID, objectPlacement.RelativePlacement.value)
                 const location = await props.getItemProperties(modelID, relativePlacement.Location.value);
 
-                CreateFoldoutElement('Location', "X: " + location.Coordinates['0'].value + " Y: " + location.Coordinates['1'].value + " Z: " + location.Coordinates['2'].value , attributesFoldout);
+                UIUtility.CreateFoldoutElement('Location', "X: " + location.Coordinates['0'].value + " Y: " + location.Coordinates['1'].value + " Z: " + location.Coordinates['2'].value , attributesFoldout);
 
                 if(property.ObjectType)
-                    CreateFoldoutElement('Object Type', property.ObjectType.value, attributesFoldout);
+                    UIUtility.CreateFoldoutElement('Object Type', property.ObjectType.value, attributesFoldout);
             }
 
             async function CreateMaterialFoldout(property: { [attribute: string]:any }, container:HTMLElement) {
@@ -465,46 +466,46 @@ async function LoadIFCModel(arrayBuffer: ArrayBuffer, name: string): Promise<FRA
                 materials.forEach(async materialProperty => {
                     if(materialProperty.ForLayerSet) {
                         const layerSet = await model.getProperties(materialProperty.ForLayerSet.value);
-                        const layerSetContainer = CreateFoldout('Layers', container);
+                        const layerSetContainer =  UIUtility.CreateFoldout('Layers', container);
                         
                         for(const layerHandle in layerSet.MaterialLayers) {
                             const layer = await model.getProperties(layerSet.MaterialLayers[layerHandle].value);
-                            const layerContainer = CreateFoldout('Layer', layerSetContainer)
+                            const layerContainer =  UIUtility.CreateFoldout('Layer', layerSetContainer)
                             
                             if(layer.LayerThickness)
-                                CreateFoldoutElement('Layer Thickness', layer.LayerThickness.value, layerContainer)
+                                UIUtility.CreateFoldoutElement('Layer Thickness', layer.LayerThickness.value, layerContainer)
                             
                             if(layer.Material) {
                                 const material = await model.getProperties(layer.Material.value);
-                                CreateFoldoutElement('Material', material.Name.value, layerContainer);
+                                UIUtility.CreateFoldoutElement('Material', material.Name.value, layerContainer);
                             } else {
-                                CreateFoldoutElement('Material', 'Undefined', layerContainer)
+                                UIUtility.CreateFoldoutElement('Material', 'Undefined', layerContainer)
                             }
                         }
                     } else if(materialProperty.Materials) {
-                        const materialsContainer = CreateFoldout('Materials', container)
+                        const materialsContainer =  UIUtility.CreateFoldout('Materials', container)
                         for(const materialHandle in materialProperty.Materials) {
                             const material = await model.getProperties(materialProperty.Materials[materialHandle].value);
-                            CreateFoldoutElement(material.Name.value, undefined, materialsContainer);
+                            UIUtility.CreateFoldoutElement(material.Name.value, undefined, materialsContainer);
                         }
                     }
                     else 
-                        CreateFoldoutElement('Material', materialProperty.Name.value, container);
+                        UIUtility.CreateFoldoutElement('Material', materialProperty.Name.value, container);
                 })
             }
 
             async function CreatePropertySetsFoldout(property: { [attribute: string]:any }, container:HTMLElement) {
                 const propertySets = await props.getPropertySets(modelID, property.expressID);
                 if(propertySets.length != 0) {
-                    const propertySetsContainer = CreateFoldout('Property Sets', container);
+                    const propertySetsContainer =  UIUtility.CreateFoldout('Property Sets', container);
                     propertySets.forEach(async propertySet => {
-                        const propertySetFoldout = CreateFoldout(propertySet.Name.value, propertySetsContainer);
+                        const propertySetFoldout =  UIUtility.CreateFoldout(propertySet.Name.value, propertySetsContainer);
                         for(const Handle in propertySet.HasProperties) {
                             const singleValue = await model.getProperties(propertySet.HasProperties[Handle].value);
                             if(!singleValue.NominalValue)
                                 return;
                            
-                            CreateFoldoutElement(singleValue.Name.value, singleValue.NominalValue.value + (singleValue.Unit ? " " + singleValue.Unit.value : ""), propertySetFoldout);
+                            UIUtility.CreateFoldoutElement(singleValue.Name.value, singleValue.NominalValue.value + (singleValue.Unit ? " " + singleValue.Unit.value : ""), propertySetFoldout);
                         }
                     })
                 }
@@ -515,73 +516,12 @@ async function LoadIFCModel(arrayBuffer: ArrayBuffer, name: string): Promise<FRA
                 const spatialElement = await model.getProperties(spatialElementID);
 
                 if(spatialElement) {
-                    const spatialElementContainer = CreateFoldout('Spatial Element', container);
-                    CreateFoldoutElement('Name', spatialElement.Name.value, spatialElementContainer);
+                    const spatialElementContainer =  UIUtility.CreateFoldout('Spatial Element', container);
+                    UIUtility.CreateFoldoutElement('Name', spatialElement.Name.value, spatialElementContainer);
 
                     if(spatialElement.Elevation)
-                        CreateFoldoutElement('Elevation', spatialElement.Elevation.value, spatialElementContainer)
+                        UIUtility.CreateFoldoutElement('Elevation', spatialElement.Elevation.value, spatialElementContainer)
                 }
-            }
-
-            function CreateFoldout(name: string, parent:HTMLElement): HTMLElement {
-                const foldout = document.createElement('div');
-                foldout.classList.add('foldout')
-                parent.append(foldout)
-
-                const foldoutHeader = document.createElement('div')
-                foldoutHeader.classList.add('foldout-header')
-                foldout.append(foldoutHeader)
-                
-                const foldoutButton = document.createElement('i')
-                foldoutButton.addEventListener('click', (e)=> {
-                    if(e.button != 0)
-                        return;
-
-                    foldoutButton.classList.toggle('arrow-open')
-                    foldoutContainer.classList.toggle('foldout-container-open');
-                    
-                    foldoutContainer.style.height = foldoutButton.classList.contains('arrow-open') ? (foldoutContainer.scrollHeight + 'px') : ('0px')
-                })
-                foldoutButton.innerHTML = 'arrow_forward_ios'
-                foldoutButton.classList.add('arrow', 'material-symbols-outlined', 'unselectable')
-                foldoutHeader.append(foldoutButton);
-                
-                const foldoutName = document.createElement('div')
-                foldoutName.innerHTML = name;
-                foldoutName.classList.add('foldout-name')
-                foldoutHeader.append(foldoutName)
-
-                const foldoutContainer = document.createElement('div');
-                foldoutContainer.classList.add('foldout-container');
-                foldout.append(foldoutContainer);
-
-                if(parent.classList.contains('foldout-container')) 
-                    foldoutContainer.ontransitionend = () => {
-                        var height = 0;
-                        parent.childNodes.forEach(child => height += (child as HTMLElement).offsetHeight)
-                        parent.style.height = height + 'px';
-                    }
-
-                return foldoutContainer;
-            }
-
-            function CreateFoldoutElement(label:string, value?:any, parent?:HTMLElement) {
-                const foldoutElement = document.createElement('div');
-                foldoutElement.classList.add('foldout-element')
-
-                const foldoutLabel = document.createElement('div')
-                foldoutLabel.innerHTML = ' - ' + label;
-                foldoutLabel.classList.add('foldout-label')
-                foldoutElement.append(foldoutLabel)
-
-                if(value != undefined && value != null) {
-                    const foldoutValue = document.createElement('div');
-                    foldoutValue.innerHTML = value.toString();
-                    foldoutValue.classList.add('foldout-value')
-                    foldoutElement.append(foldoutValue)
-                }
-
-                parent?.append(foldoutElement);
             }
 
             function ClearPropertyTree() {
