@@ -22,6 +22,7 @@ const projection = document.getElementById('projection') as HTMLSelectElement;
 // Windows
 
 const models = document.getElementById('models');
+const modelsContainer = models.getElementsByClassName('window-container').item(0) as HTMLElement;
 const modelsWindowHeader = document.getElementById('models-header');
 const closeModelsManager = document.getElementById('close-models-window');
 const openModelsManager = document.getElementById('open-model-manager')
@@ -32,6 +33,7 @@ const propertyTreeHeader = document.getElementById('property-tree-header');
 const closePropertyTree = document.getElementById('close-property-tree')
 
 const properties = document.getElementById('properties')
+const propertiesContainer = properties.getElementsByClassName('window-container').item(0) as HTMLElement
 const propertiesHeader = document.getElementById('properties-header')  
 const closeProperties = document.getElementById('close-properties')
 const openProperties = document.getElementById('open-properties');
@@ -218,17 +220,16 @@ async function Initialize(): Promise<void> {
     function InitializeTools() {
         moveTool.addEventListener('click', () => {
             currentTool = Tools.Move
-            moveTool.style.filter = 'invert(1)'
-            selectTool.style.filter = 'invert(0)'
+            moveTool.classList.add('tool-selected')
+            selectTool.classList.remove('tool-selected')
             highlighter.clear();
             highlighter.enabled = false;
         })
 
-        selectTool.style.filter = 'invert(1)'
         selectTool.addEventListener('click', () => {
             currentTool = Tools.Select
-            selectTool.style.filter = 'invert(1)'
-            moveTool.style.filter = 'invert(0)'
+            selectTool.classList.add('tool-selected')
+            moveTool.classList.remove('tool-selected')
             highlighter.enabled = true;
             transformControls.visible = false;
             selectedModel = null;
@@ -412,7 +413,7 @@ async function LoadIFCModel(arrayBuffer: ArrayBuffer, name: string): Promise<FRA
     function AddModelToManager() {
         const modelItem = document.createElement('div');
         modelItem.classList.add("model-item")
-        models.append(modelItem);
+        modelsContainer.append(modelItem);
 
         const modelName = document.createElement('div');
         modelName.innerHTML = model.name;
@@ -610,7 +611,7 @@ async function LoadIFCModel(arrayBuffer: ArrayBuffer, name: string): Promise<FRA
             }
         })
         modelPropertyTree.title = 'Property Tree'
-        modelPropertyTree.classList.add('model-property-tree', 'material-symbols-outlined', 'unselectable')
+        modelPropertyTree.classList.add('model-property-tree', 'material-symbols-outlined', 'unselectable', 'small-button')
         modelPropertyTree.innerHTML = 'list'
         modelItem.append(modelPropertyTree);
 
@@ -626,7 +627,7 @@ async function LoadIFCModel(arrayBuffer: ArrayBuffer, name: string): Promise<FRA
                 transformControls.visible = true;
         })
         hideModel.title = 'Visibilty';
-        hideModel.classList.add('model-hide', 'material-symbols-outlined', 'unselectable')
+        hideModel.classList.add('model-hide', 'material-symbols-outlined', 'unselectable', 'small-button')
         hideModel.innerHTML = "visibility"
         modelItem.append(hideModel);
 
@@ -645,7 +646,7 @@ async function LoadIFCModel(arrayBuffer: ArrayBuffer, name: string): Promise<FRA
             models.removeChild(modelItem);
         });
         deleteModel.title = 'Delete'
-        deleteModel.classList.add('model-delete', 'material-symbols-outlined', 'unselectable')
+        deleteModel.classList.add('model-delete', 'material-symbols-outlined', 'unselectable', 'small-button')
         deleteModel.innerHTML = 'delete';
         modelItem.append(deleteModel);
     }
@@ -654,7 +655,7 @@ async function LoadIFCModel(arrayBuffer: ArrayBuffer, name: string): Promise<FRA
         const part = document.createElement('div');
         part.innerHTML = data.Name.value;
         part.classList.add('part')
-        properties.append(part)
+        propertiesContainer.append(part)
 
         for (const prop in data) {
             if(data[prop]&& data[prop].value)

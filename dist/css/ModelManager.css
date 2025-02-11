@@ -1,0 +1,22 @@
+.model-manager {
+    align-content: center;
+    padding-left: 5px;
+
+}
+
+.model-item {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+.model-name {
+    max-width: 300px;
+    white-space: nowrap;
+    overflow: hidden;
+    align-content: center;
+    padding-left: 5px;
+    margin-right: auto;
+}

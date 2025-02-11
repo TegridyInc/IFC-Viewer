@@ -1,0 +1,16 @@
+.part {
+    padding: 5px;
+    padding-left: 10px;
+}
+
+.property {
+    display: flex;
+    flex-direction: row;
+    font-size: 80%;
+    padding: 0px 5px 0px 5px;
+}
+
+.property-value {
+    display: flex;
+    margin-left: auto;
+}
