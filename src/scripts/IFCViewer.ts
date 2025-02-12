@@ -37,6 +37,7 @@ const ifcloader = components.get(COM.IfcLoader);
 const worlds = components.get(COM.Worlds);
 const world = worlds.create<COM.SimpleScene, COM.OrthoPerspectiveCamera, COM.SimpleRenderer>();
 const clipper = components.get(COM.Clipper);
+const cullers = components.get(COM.Cullers);
 const fragmentBbox = components.get(COM.BoundingBoxer);
 const casters = components.get(COM.Raycasters);
 const grids = components.get(COM.Grids);
@@ -54,7 +55,7 @@ const cameraFitting = {
 
 var grid: COM.SimpleGrid;
 var caster: COM.SimpleRaycaster;
-
+var culler: COM.MeshCullerRenderer;
 var currentTool: Tools;
 
 var transformControls: THREE.Group;
@@ -313,6 +314,14 @@ async function Initialize(): Promise<void> {
         
         clipper.enabled = true;
         clipper.setup({ color: new THREE.Color(1, 1, 1) })
+       
+        culler = cullers.create(world);
+        culler.config.threshold = 0;
+        culler.needsUpdate = true;
+        
+        world.camera.controls.addEventListener("sleep", () => {
+            culler.needsUpdate = true;
+        });
     }
 }
 
@@ -333,6 +342,9 @@ async function LoadIFCModel(arrayBuffer: ArrayBuffer, name: string): Promise<FRA
 
     model.children.forEach(child => {
         child.position.sub(bbox.position);
+        
+        if(child instanceof FRA.FragmentMesh) 
+            culler.add(child)
     })
 
     bbox.geometry.computeBoundingBox();
