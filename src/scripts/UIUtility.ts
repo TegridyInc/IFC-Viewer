@@ -1,21 +1,36 @@
-export function CreateFoldout(name: string, parent:HTMLElement): HTMLElement {
+interface FoldoutData {
+    parent:HTMLElement;
+    header:HTMLElement;
+    container:HTMLElement;
+}
+
+export function CreateFoldout(name: string, parent:HTMLElement, onOpen?:()=>Promise<void>, onClosed?:()=>Promise<void>): FoldoutData {
+    var foldoutData = {} as FoldoutData;
     const foldout = document.createElement('div');
+    foldoutData.parent = foldout;
     foldout.classList.add('foldout')
     parent.append(foldout)
 
     const foldoutHeader = document.createElement('div')
+    foldoutData.header = foldoutHeader;
     foldoutHeader.classList.add('foldout-header')
     foldout.append(foldoutHeader)
     
     const foldoutButton = document.createElement('i')
-    foldoutButton.addEventListener('click', (e)=> {
+    foldoutButton.addEventListener('click', async(e)=> {
         if(e.button != 0)
             return;
 
         foldoutButton.classList.toggle('arrow-open')
         foldoutContainer.classList.toggle('foldout-container-open');
         
-        foldoutContainer.style.height = foldoutButton.classList.contains('arrow-open') ? (foldoutContainer.scrollHeight + 'px') : ('0px')
+        const isOpen = foldoutButton.classList.contains('arrow-open');
+        if(isOpen && onOpen) 
+            await onOpen();
+        else if(onClosed) 
+            await onClosed();
+        
+        foldoutContainer.style.height = isOpen ? (foldoutContainer.scrollHeight + 'px') : ('0px')
     })
     foldoutButton.innerHTML = 'arrow_forward_ios'
     foldoutButton.classList.add('arrow', 'material-symbols-outlined', 'unselectable')
@@ -27,6 +42,7 @@ export function CreateFoldout(name: string, parent:HTMLElement): HTMLElement {
     foldoutHeader.append(foldoutName)
 
     const foldoutContainer = document.createElement('div');
+    foldoutData.container = foldoutContainer;
     foldoutContainer.classList.add('foldout-container');
     foldout.append(foldoutContainer);
 
@@ -37,7 +53,7 @@ export function CreateFoldout(name: string, parent:HTMLElement): HTMLElement {
             parent.style.height = height + 'px';
         }
 
-    return foldoutContainer;
+    return foldoutData;
 }
 
 export function CreateFoldoutElement(label:string, value?:any, parent?:HTMLElement) {
@@ -92,4 +108,23 @@ export function CreateWindow(name:string, parent:HTMLElement) : [HTMLElement, HT
     window.append(windowContainer);
 
     return [window, windowContainer];
+}
+
+export function CreateButton(iconName:string, parent:HTMLElement, onClick:(e:MouseEvent)=>void) {
+    const button = document.createElement('i');
+    button.classList.add('small-button', 'material-symbols-outlined', 'unselectable');
+
+    button.innerHTML = iconName;
+    button.onclick = onClick;
+    parent.append(button)
+}
+
+export function CreateColorInput(hex:string, parent:HTMLElement, onValueChanged:(e:InputEvent)=>void) {
+    const colorInput = document.createElement('input')
+    colorInput.type = 'color';
+    colorInput.classList.add('color-input');
+    colorInput.value = hex;
+
+    colorInput.onchange = onValueChanged;
+    parent.append(colorInput);
 }

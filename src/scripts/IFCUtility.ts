@@ -1,0 +1,228 @@
+import * as COM from '@thatopen/components';
+import * as OBF from '@thatopen/components-front';
+import * as FRA from '@thatopen/fragments';
+import * as THREE from 'three'
+import * as WEBIFC from 'web-ifc';
+import * as UIUtility from './UIUtility';
+
+var ifcAPI:WEBIFC.IfcAPI;
+var Culler: COM.MeshCullerRenderer;
+var Highlighter:OBF.Highlighter;
+
+interface ObjectsData {
+    objects: { [attibute: string]: any }[];
+    threeObjects: FRA.FragmentMesh[];
+    fragmentIDMap: {[attribute:string]:any};
+    type: number;
+}
+
+export async function Setup(api: WEBIFC.IfcAPI, culler:COM.MeshCullerRenderer, highlighter:OBF.Highlighter) {
+    ifcAPI = api;
+    Culler = culler;
+    Highlighter = highlighter;
+}
+
+export async function CreateTypeFoldouts(model: FRA.FragmentsGroup, data: Uint8Array, container: HTMLElement, modelID: number) {
+    var objects: ObjectsData[] = [];
+
+    for (const child of model.children) {
+        
+        if (!(child instanceof FRA.FragmentMesh))
+            continue;
+
+        const idsIterator = child.fragment.ids.values();
+        const id = idsIterator.next();
+
+        const properties = await ifcAPI.properties.getItemProperties(modelID, id.value);
+        const index = objects.find(value => {
+            if (value.type == properties.type) {
+                const index = value.objects.find(value => value.expressID == properties.expressID)
+                if (index == undefined)
+                    value.objects.push(properties)
+
+                value.threeObjects.push(child);
+                return true;
+            }
+
+            return false;
+        });
+
+        if (index == undefined)
+            objects.push({ objects: [properties], threeObjects: [child], fragmentIDMap:null, type: properties.type });
+    }
+
+    for (const object of objects) {
+        const name = ifcAPI.GetNameFromTypeCode(object.type);
+        Highlighter.add(name, new THREE.Color(1,0,0))
+
+        var ids:number[] = [];
+        object.threeObjects.forEach(threeObject=> {
+            const fragmentIDS = [...threeObject.fragment.ids];
+            ids = ids.concat(fragmentIDS)
+        })   
+      
+        object.fragmentIDMap = model.getFragmentMap(ids);
+
+        const data = UIUtility.CreateFoldout(name, container, async () => {
+            await CreateModelFoldouts(object.objects, data.container, modelID)
+        }, async () => {
+            data.container.innerHTML = ''
+        });
+        
+        const divider = document.createElement('div');
+        divider.style.marginLeft = 'auto'
+        data.header.append(divider)
+        UIUtility.CreateColorInput('#ff0000', data.header, (e)=>{
+            const value = (e.target as HTMLInputElement).value;
+            var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(value);
+            const rgb = {
+              r: parseInt(result[1], 16) / 255,
+              g: parseInt(result[2], 16) / 255,
+              b: parseInt(result[3], 16) / 255
+            };
+            const color = Highlighter.colors.get(name);
+            if(color)
+                color.set(rgb.r, rgb.g, rgb.b);
+        });
+        UIUtility.CreateButton('light_off', data.header, (e)=>{
+            const button = e.target as HTMLElement;
+            const isHighlighted = button.innerHTML == 'lightbulb';
+            button.innerHTML = isHighlighted ? 'light_off' : 'lightbulb';
+
+            Highlighter.highlightByID(name, isHighlighted ? {} : object.fragmentIDMap, true)
+        });
+        UIUtility.CreateButton('visibility', data.header, (e)=>{
+            const button = e.target as HTMLElement;
+            const isVisible = button.innerHTML == 'visibility';
+            button.innerHTML = isVisible ? 'visibility_off' : 'visibility';
+
+            for(const threeObject of object.threeObjects) {
+                const colorMesh = Culler.colorMeshes.get(threeObject.uuid);
+                if(!colorMesh) {
+                    threeObject.visible = !isVisible;
+                    continue;
+                }
+
+                if(isVisible) 
+                    colorMesh.visible = false;
+                else 
+                    colorMesh.visible = true;
+            }
+
+            Culler.needsUpdate = true;
+        });
+    }
+
+}
+
+async function CreateModelFoldouts(properties: { [attribute: string]: any }[], container: HTMLElement, modelID: number) {
+    for (const property of properties) {
+        const modelFoldoutData = UIUtility.CreateFoldout(property.Name.value, container, async () => {
+            await CreateAttributesFoldout(property, modelFoldoutData.container, modelID)
+            await CreateMaterialFoldout(property, modelFoldoutData.container, modelID);
+            await CreatePropertySetsFoldout(property, modelFoldoutData.container, modelID);
+            await CreateSpatialElementFoldout(property, modelFoldoutData.container, modelID)
+        }, async () => {
+            modelFoldoutData.container.innerHTML = ''
+        });
+
+    }
+}
+
+async function CreateAttributesFoldout(property: { [attribute: string]: any }, container: HTMLElement, modelID: number) {
+    const attributesFoldoutData = UIUtility.CreateFoldout('Attributes', container);
+
+    UIUtility.CreateFoldoutElement('Class', ifcAPI.GetNameFromTypeCode(property.type), attributesFoldoutData.container)
+
+    const objectPlacement = await ifcAPI.properties.getItemProperties(modelID, property.ObjectPlacement.value);
+    const relativePlacement = await ifcAPI.properties.getItemProperties(modelID, objectPlacement.RelativePlacement.value)
+    const location = await ifcAPI.properties.getItemProperties(modelID, relativePlacement.Location.value);
+
+    UIUtility.CreateFoldoutElement('Location', "X: " + location.Coordinates['0'].value + " Y: " + location.Coordinates['1'].value + " Z: " + location.Coordinates['2'].value, attributesFoldoutData.container);
+
+    if (property.ObjectType)
+        UIUtility.CreateFoldoutElement('Object Type', property.ObjectType.value, attributesFoldoutData.container);
+}
+
+async function CreateMaterialFoldout(property: { [attribute: string]: any }, container: HTMLElement, modelID: number) {
+    const materials = await ifcAPI.properties.getMaterialsProperties(modelID, property.expressID);
+    materials.forEach(async materialProperty => {
+        if (materialProperty.ForLayerSet) {
+            const layerSet = await ifcAPI.properties.getItemProperties(modelID, materialProperty.ForLayerSet.value);
+            const layerSetContainerData = UIUtility.CreateFoldout('Layers', container);
+
+            for (const layerHandle in layerSet.MaterialLayers) {
+                const layer = await ifcAPI.properties.getItemProperties(modelID, layerSet.MaterialLayers[layerHandle].value);
+                const layerContainerData = UIUtility.CreateFoldout('Layer', layerSetContainerData.container)
+
+                if (layer.LayerThickness)
+                    UIUtility.CreateFoldoutElement('Layer Thickness', layer.LayerThickness.value, layerContainerData.container)
+
+                if (layer.Material) {
+                    const material = await ifcAPI.properties.getItemProperties(modelID, layer.Material.value);
+                    UIUtility.CreateFoldoutElement('Material', material.Name.value, layerContainerData.container);
+                } else {
+                    UIUtility.CreateFoldoutElement('Material', 'Undefined', layerContainerData.container)
+                }
+            }
+        } else if (materialProperty.Materials) {
+            const materialsContainerData = UIUtility.CreateFoldout('Materials', container)
+            for (const materialHandle in materialProperty.Materials) {
+                const material = await ifcAPI.properties.getItemProperties(modelID, materialProperty.Materials[materialHandle].value);
+                UIUtility.CreateFoldoutElement(material.Name.value, undefined, materialsContainerData.container);
+            }
+        }
+        else
+            UIUtility.CreateFoldoutElement('Material', materialProperty.Name.value, container);
+    })
+}
+
+async function CreatePropertySetsFoldout(property: { [attribute: string]: any }, container: HTMLElement, modelID: number) {
+    const propertySets = await ifcAPI.properties.getPropertySets(modelID, property.expressID);
+    if (propertySets.length != 0) {
+        const propertySetsContainerData = UIUtility.CreateFoldout('Property Sets', container);
+        propertySets.forEach(async propertySet => {
+            const propertySetFoldoutData = UIUtility.CreateFoldout(propertySet.Name.value, propertySetsContainerData.container);
+            for (const Handle in propertySet.HasProperties) {
+                const singleValue = await ifcAPI.properties.getItemProperties(modelID, propertySet.HasProperties[Handle].value);
+                if (!singleValue.NominalValue)
+                    return;
+
+                UIUtility.CreateFoldoutElement(singleValue.Name.value, singleValue.NominalValue.value + (singleValue.Unit ? " " + singleValue.Unit.value : ""), propertySetFoldoutData.container);
+            }
+        })
+    }
+}
+
+async function CreateSpatialElementFoldout(property: { [attribute: string]: any }, container: HTMLElement, modelID:number) {
+    const spatialStructure = await ifcAPI.properties.getSpatialStructure(modelID);
+    const spatialElementID = GetSpatialElement(spatialStructure, property.expressID);
+    const spatialElement = await ifcAPI.properties.getItemProperties(modelID, spatialElementID);
+
+    if (spatialElement) {
+        const spatialElementContainerData = UIUtility.CreateFoldout('Spatial Element', container);
+        UIUtility.CreateFoldoutElement('Name', spatialElement.Name.value, spatialElementContainerData.container);
+
+        if (spatialElement.Elevation)
+            UIUtility.CreateFoldoutElement('Elevation', spatialElement.Elevation.value, spatialElementContainerData.container)
+    }
+}
+
+function GetSpatialElement(spatialStructure: any, id: number): number | null {
+    if (!spatialStructure.children)
+        return null;
+
+    for (const child in spatialStructure.children) {
+        if (spatialStructure.children[child].expressID == id)
+            return spatialStructure.expressID;
+        else {
+            const result = GetSpatialElement(spatialStructure.children[child], id);
+            if (result)
+                return result;
+
+            continue;
+        }
+    }
+
+    return null;
+}
