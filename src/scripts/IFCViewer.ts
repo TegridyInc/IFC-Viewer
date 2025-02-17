@@ -39,7 +39,7 @@ const worlds = components.get(COM.Worlds);
 const world = worlds.create<COM.SimpleScene, COM.OrthoPerspectiveCamera, COM.SimpleRenderer>();
 const clipper = components.get(COM.Clipper);
 const cullers = components.get(COM.Cullers);
-const fragmentBbox = components.get(COM.BoundingBoxer);
+const boundingBoxer = components.get(COM.BoundingBoxer);
 const casters = components.get(COM.Raycasters);
 const grids = components.get(COM.Grids);
 const propsManager = components.get(COM.IfcPropertiesManager);
@@ -65,7 +65,7 @@ var leftControl: THREE.Mesh;
 var forwardControl: THREE.Mesh;
 
 var selectedModel: THREE.Object3D;
-var boundingBoxes = [] as THREE.Mesh[];
+var boundingBoxes = [] as IFCUtility.BoundingBoxData[];
 var mouseMoveAmount = 0;
 
 enum Tools {
@@ -84,7 +84,7 @@ async function Initialize(): Promise<void> {
 
     webIfc.SetWasmPath("https://unpkg.com/web-ifc@0.0.66/", true);
     await webIfc.Init();
-    IFCUtility.Setup(webIfc, culler, highlighter);
+    IFCUtility.Setup(webIfc, culler, highlighter, boundingBoxer);
     
 
     function InitializeTransformControls() {
@@ -190,22 +190,25 @@ async function Initialize(): Promise<void> {
                 return;
 
             if (currentTool == Tools.Move) {
-                boundingBoxes.forEach(element => {
-                    element.visible = false;
+                const geometries = [] as THREE.Mesh[]
+                boundingBoxes.forEach(boundingBox => {
+                    boundingBox.outline.visible = false;
+                    geometries.push(boundingBox.boxMesh);
                 })
 
-                const result = caster.castRay(boundingBoxes);
-
+                const result = caster.castRay(geometries);
                 if (!result) {
                     transformControls.visible = false;
                     selectedModel = null;
                     return;
                 }
 
-                result.object.visible = true;
+                const outline = boundingBoxes.find(value => value.boxMesh == result.object).outline;
+
+                outline.visible = true;
                 transformControls.visible = true;
-                transformControls.position.copy(result.object.parent.position);
-                selectedModel = result.object.parent;
+                transformControls.position.copy(outline.parent.position);
+                selectedModel = outline.parent;
 
                 ScaleTransformControls();
             }
@@ -247,11 +250,11 @@ async function Initialize(): Promise<void> {
                 if (!selectedModel)
                     return;
     
-                fragmentBbox.dispose();
-                fragmentBbox.reset();
-                fragmentBbox.add(selectedModel as FRA.FragmentsGroup);
+                boundingBoxer.dispose();
+                boundingBoxer.reset();
+                boundingBoxer.add(selectedModel as FRA.FragmentsGroup);
     
-                const box3 = fragmentBbox.get();
+                const box3 = boundingBoxer.get();
                 world.camera.controls.fitToBox(box3, true, cameraFitting).then(ScaleTransformControls);
             }
         })
@@ -356,33 +359,20 @@ async function LoadIFCModel(arrayBuffer: ArrayBuffer, name: string): Promise<FRA
     const data = new Uint8Array(arrayBuffer);
     const model = await ifcloader.load(data);
     const modelID = webIfc.OpenModel(data);
-
-    fragmentBbox.reset();
-    fragmentBbox.add(model);
-    const bbox = fragmentBbox.getMesh();
+    model.name = name;
+    
+    const boundingBoxData = IFCUtility.CreateBoundingBox(model, true);
+    boundingBoxes.push(boundingBoxData)
 
     model.children.forEach(child => {
         if(child instanceof FRA.FragmentMesh) 
             culler.add(child)
     })
 
-    bbox.geometry.computeBoundingBox();
-
-    const modelBB = bbox.clone();
-    boundingBoxes.push(modelBB)
-    modelBB.visible = false;
-    modelBB.position.set(0, 0, 0)
-    const material = modelBB.material as THREE.MeshBasicMaterial;
-    material.wireframe = true;
-    
-    world.camera.controls.fitToBox(modelBB, true, cameraFitting);
-    model.add(modelBB);
-
-    fragmentBbox.dispose();
+    world.camera.controls.fitToBox(boundingBoxData.boxMesh, true, cameraFitting);
     world.scene.three.add(model);
-    model.name = name;
 
-    selectTool.addEventListener('click', () => modelBB.visible = false)
+    selectTool.addEventListener('click', () => boundingBoxData.outline.visible = false)
     
     const indexer = components.get(COM.IfcRelationsIndexer);
     await indexer.process(model);
@@ -426,6 +416,14 @@ async function LoadIFCModel(arrayBuffer: ArrayBuffer, name: string): Promise<FRA
         modelName.classList.add("model-name")
         modelItem.append(modelName);
 
+        UIUtility.CreateColorInput('#ffffff', modelItem, (e) => {
+            const value = (e.target as HTMLInputElement).value;
+            const hex = '0x' + value.split('#')[1]
+          
+            console.log(hex)
+            boundingBoxData.outline.material.color.setHex(parseInt(hex));
+        }, 'Bounding Box Color');
+
         const modelPropertyTree = document.createElement('i');
         modelPropertyTree.addEventListener('click', async ()=> {
             IFCUtility.CreateTypeFoldouts(model,data,propertyTreeContainer, modelID);
@@ -440,7 +438,7 @@ async function LoadIFCModel(arrayBuffer: ArrayBuffer, name: string): Promise<FRA
         hideModel.addEventListener('click', () => {
             model.visible = !model.visible
             hideModel.innerHTML = model.visible ? 'visibility' : 'visibility_off';
-            modelBB.layers.set(model.visible ? 0 : 1);
+            boundingBoxData.outline.layers.set(model.visible ? 0 : 1);
 
             if (selectedModel == model && !model.visible)
                 transformControls.visible = false;
@@ -459,7 +457,7 @@ async function LoadIFCModel(arrayBuffer: ArrayBuffer, name: string): Promise<FRA
 
             world.scene.three.remove(model)
 
-            const index = boundingBoxes.indexOf(modelBB, 0);
+            const index = boundingBoxes.indexOf(boundingBoxData, 0);
             if (index > -1) {
                 boundingBoxes.splice(index, 1);
             }

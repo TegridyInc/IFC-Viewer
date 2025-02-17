@@ -110,21 +110,28 @@ export function CreateWindow(name:string, parent:HTMLElement) : [HTMLElement, HT
     return [window, windowContainer];
 }
 
-export function CreateButton(iconName:string, parent:HTMLElement, onClick:(e:MouseEvent)=>void) {
+export function CreateButton(iconName:string, parent:HTMLElement, onClick:(e:MouseEvent)=>void, tooltip?:string) {
     const button = document.createElement('i');
     button.classList.add('small-button', 'material-symbols-outlined', 'unselectable');
 
     button.innerHTML = iconName;
     button.onclick = onClick;
+
+    if(tooltip)
+        button.title = tooltip;
+    
     parent.append(button)
 }
 
-export function CreateColorInput(hex:string, parent:HTMLElement, onValueChanged:(e:InputEvent)=>void) {
+export function CreateColorInput(hex:string, parent:HTMLElement, onValueChanged:(e:InputEvent)=>void, tooltip?:string) {
     const colorInput = document.createElement('input')
     colorInput.type = 'color';
     colorInput.classList.add('color-input');
     colorInput.value = hex;
 
     colorInput.onchange = onValueChanged;
+
+    if(tooltip)
+        colorInput.title = tooltip;
     parent.append(colorInput);
 }

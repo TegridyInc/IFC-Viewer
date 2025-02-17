@@ -8,6 +8,7 @@ import * as UIUtility from './UIUtility';
 var ifcAPI:WEBIFC.IfcAPI;
 var Culler: COM.MeshCullerRenderer;
 var Highlighter:OBF.Highlighter;
+var BoundingBoxer:COM.BoundingBoxer;
 
 interface ObjectsData {
     objects: { [attibute: string]: any }[];
@@ -16,10 +17,43 @@ interface ObjectsData {
     type: number;
 }
 
-export async function Setup(api: WEBIFC.IfcAPI, culler:COM.MeshCullerRenderer, highlighter:OBF.Highlighter) {
+export interface BoundingBoxData {
+    outline:THREE.BoxHelper;
+    boxMesh:THREE.Mesh;
+}
+
+export async function Setup(api: WEBIFC.IfcAPI, culler:COM.MeshCullerRenderer, highlighter:OBF.Highlighter, boundingBoxer:COM.BoundingBoxer) {
     ifcAPI = api;
     Culler = culler;
     Highlighter = highlighter;
+    BoundingBoxer = boundingBoxer;
+}
+
+export function CreateBoundingBox(model:FRA.FragmentsGroup, offsetModel?:boolean, color?:THREE.ColorRepresentation) : BoundingBoxData {
+    BoundingBoxer.reset();
+    BoundingBoxer.add(model);
+    const box3 = BoundingBoxer.get();
+
+    const boxMesh = BoundingBoxer.getMesh().clone();
+    model.add(boxMesh);
+    boxMesh.visible = false;
+    
+    if(offsetModel) {
+        model.children.forEach(child => {
+            if(child instanceof FRA.FragmentMesh)
+                child.position.sub(boxMesh.position);
+        })
+        
+        model.position.set(0, (Math.abs(box3.min.y) + box3.max.y) / 2, 0);
+        boxMesh.position.setScalar(0);
+    }
+    
+    const outline = new THREE.BoxHelper(boxMesh, color ? color : 0xffffff);
+    outline.visible = false;
+    model.add(outline)
+
+    BoundingBoxer.dispose();
+    return {outline, boxMesh: boxMesh};
 }
 
 export async function CreateTypeFoldouts(model: FRA.FragmentsGroup, data: Uint8Array, container: HTMLElement, modelID: number) {
@@ -226,3 +260,4 @@ function GetSpatialElement(spatialStructure: any, id: number): number | null {
 
     return null;
 }
+
