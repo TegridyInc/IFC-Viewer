@@ -1,3 +1,4 @@
+import * as Stats from 'stats.js';
 import * as COM from '@thatopen/components';
 import * as OBF from '@thatopen/components-front';
 import * as FRA from '@thatopen/fragments';
@@ -9,6 +10,21 @@ import * as EXCELJS from 'exceljs'
 import * as THREE from 'three';
 import * as UIUtility from './UIUtility'
 import * as IFCUtility from './IFCUtility'
+//#region Debugging
+declare global {
+    var debug: Function;
+}
+
+globalThis.debug = () => {
+    isDebugging = !isDebugging;
+
+    isDebugging ?  document.dispatchEvent(OnDebuggingEnabled) : document.dispatchEvent(OnDebuggingDisabled)
+}
+
+var isDebugging=false;
+const OnDebuggingEnabled = new CustomEvent('debugenabled');
+const OnDebuggingDisabled = new CustomEvent('debugdisabled')
+//#endregion
 
 // Variables
 const container = document.getElementById('container');
@@ -385,11 +401,37 @@ async function Initialize(): Promise<void> {
         culler.needsUpdate = true;
         
         culler.config.renderDebugFrame = true;
+        culler.config.width = 350;
+        culler.config.height = 350;
+
         const debugFrame = culler.renderer.domElement;
         document.body.appendChild(debugFrame);
+        debugFrame.style.visibility = 'hidden';
         debugFrame.style.position = "fixed";
         debugFrame.style.left = "0";
         debugFrame.style.bottom = "0";
+
+        const stats = new Stats();
+        stats.showPanel(2);
+        document.body.append(stats.dom);
+        stats.dom.style.visibility = 'hidden';
+        stats.dom.style.zIndex = "unset";
+        stats.dom.style.right = '0px';
+        stats.dom.style.bottom = '0px';
+        stats.dom.style.top = 'unset';
+        stats.dom.style.left = 'unset';
+        world.renderer.onBeforeUpdate.add(() => stats.begin());
+        world.renderer.onAfterUpdate.add(() => stats.end());
+
+        document.addEventListener('debugenabled', () => {
+            debugFrame.style.visibility = 'visible';
+            stats.dom.style.visibility = 'visible';
+        })
+
+        document.addEventListener('debugdisabled', () => {
+            debugFrame.style.visibility = 'hidden';
+            stats.dom.style.visibility = 'hidden';
+        })
         
         world.camera.controls.addEventListener("sleep", () => {
             culler.needsUpdate = true;
