@@ -20,6 +20,7 @@ const selectTool = document.getElementById('select');
 // Inputs
 const fileUpload = document.getElementById('ifc-file-upload') as HTMLInputElement;
 const projection = document.getElementById('projection') as HTMLSelectElement;
+const navigation = document.getElementById('navigation') as HTMLSelectElement;
 
 // Windows
 var modelManagerContainer :HTMLElement;
@@ -67,6 +68,7 @@ var forwardControl: THREE.Mesh;
 var selectedModel: THREE.Object3D;
 var boundingBoxes = [] as IFCUtility.BoundingBoxData[];
 var mouseMoveAmount = 0;
+var cameraInput = new THREE.Vector3;
 
 enum Tools {
     Select,
@@ -282,10 +284,24 @@ async function Initialize(): Promise<void> {
                     grid.fade = true;
                     break;
                 case "orthographic":
+                    if(world.camera.mode.id == 'FirstPerson') {
+                        projection.value = 'perspective'
+                        break;
+                    }
+
                     world.camera.projection.set("Orthographic");
                     grid.fade = false;
                     break;
             }
+        };
+
+        navigation.oninput = () => {
+            if(world.camera.projection.current == 'Orthographic') {
+                navigation.value = 'Orbit'
+                return;
+            }
+
+            world.camera.set(navigation.value as COM.NavModeID);
         };
     }
 
@@ -322,6 +338,38 @@ async function Initialize(): Promise<void> {
         world.scene = new COM.SimpleScene(components);
         world.renderer = new COM.SimpleRenderer(components, container);
         world.camera = new COM.OrthoPerspectiveCamera(components);
+        
+        document.addEventListener('keydown', e => {
+            if(!e.repeat) {
+                if((e.key == 'w' && cameraInput.x != 1) || (e.key == 's' && cameraInput.x != -1))
+                    cameraInput.add(new THREE.Vector3(Number(e.key == 'w') + -Number(e.key == 's'), 0, 0))
+                
+                if((e.key == 'd' && cameraInput.y != 1) || (e.key == 'a' && cameraInput.y != -1)) 
+                    cameraInput.add(new THREE.Vector3(0, Number(e.key == 'd') + -Number(e.key == 'a'), 0))
+                
+                if((e.key == ' ' && cameraInput.z != -1) || (e.shiftKey && cameraInput.z != 1))
+                    cameraInput.add(new THREE.Vector3(0, 0, -Number(e.key == ' ') + Number(e.key == 'Shift')))
+            }   
+        })
+        
+        document.addEventListener('keyup', e => {
+            if(e.repeat)
+                return;
+            
+            cameraInput.sub(new THREE.Vector3(Number(e.key == 'w') + -Number(e.key == 's'), Number(e.key == 'd') + -Number(e.key == 'a'), -Number(e.key == ' ') + Number(e.key == 'Shift')))
+        })
+
+        const cameraControls = world.camera.controls;
+        const clock = new THREE.Clock();
+        clock.start();
+        setInterval(()=> {
+            const deltaTime = clock.getDelta();
+
+            const input = cameraInput.clone().multiplyScalar(deltaTime * 10);
+            cameraControls.truck(input.y, input.z, true);
+            cameraControls.forward(input.x, true);
+        }, 10);
+
         world.scene.setup({ backgroundColor: new THREE.Color(.05, .05, .05) });
 
         highlighter.setup({ world });
