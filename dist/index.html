@@ -5,30 +5,58 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
     <title>IFC Viewer</title>
     <link rel="stylesheet" href="./css/Default.css">
+    <link rel="stylesheet" href="./css/AppHeader.css">
     <link rel="stylesheet" href="./css/Window.css">
     <link rel="stylesheet" href="./css/Foldout.css">
     <link rel="stylesheet" href="./css/ModelManager.css">
     <link rel="stylesheet" href="./css/Properties.css">
 </head>
 <body>
-    <div id="container"></div>
-    
-    <div class="tools">
-        <button class="tool unselectable material-symbols-outlined" id="move">open_with</button>
-        <button class="tool tool-selected unselectable material-symbols-outlined" id="select">arrow_selector_tool</button>
+    <div id="app-header">
+        <div id="toolbars">
+            <div class="toolbar">
+                <div class="toolbar-container">
+                    <select id="projection" class="control selector">
+                        <option value="perspective">Perspective</option>
+                        <option value="orthographic">Orthographic</option>
+                    </select>
+                    <select id="navigation" class="control selector">
+                        <option value="Orbit">Orbit</option>
+                        <option value="FirstPerson">First Person</option>
+                    </select>
+                </div>
+                <div class="toolbar-name">Camera</div>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="toolbar">
+                <div class="toolbar-container">
+                    <i class="small-button unselectable material-symbols-outlined" id="move" title="Select Model">open_with</i>
+                    <i class="small-button tool-selected unselectable material-symbols-outlined" id="select" title="Select Object">arrow_selector_tool</i>
+                </div>
+                <div class="toolbar-name">Tool</div>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="toolbar">
+                <div class="toolbar-container model-grid">
+                    <i class="small-button unselectable material-symbols-outlined" id="open-model-manager" title="Model Manager">menu</i>
+                    <label class="small-button unselectable material-symbols-outlined" for="ifc-file-upload" title="Upload IFC Model">
+                        upload_file
+                        <input type="file" id="ifc-file-upload" accept=".ifc" hidden/>
+                    </label>
+                </div>
+                <div class="toolbar-name">Model</div>
+            </div>
+            <div class="toolbar-divider"></div>
+        </div>
+        
+        <i class="unselectable material-symbols-outlined app-header-hider-closed" id="app-header-hider"></i>
+        
+        <div class="controls">
+            <button id="open-properties" class="big-button control">Properties</button>
+        </div>
     </div>
-    <div class="controls">
-        <input type="file" id="ifc-file-upload" class="control file-input" accept=".ifc" />
-        <select id="projection" class="control selector">
-            <option value="perspective">Perspective</option>
-            <option value="orthographic">Orthographic</option>
-        </select>
-        <select id="navigation" class="control selector">
-            <option value="Orbit">Orbit</option>
-            <option value="FirstPerson">First Person</option>
-        </select>
-        <button id="open-model-manager" class="big-button control">Model Manager</button>
-        <button id="open-properties" class="big-button control">Properties</button>
+    <div id="container">
+
     </div>
     <script src="bundle.js"></script>
 </body>

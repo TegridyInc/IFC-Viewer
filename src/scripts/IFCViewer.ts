@@ -34,6 +34,8 @@ const moveTool = document.getElementById('move')
 const selectTool = document.getElementById('select');
 
 // Inputs
+const toolbars = document.getElementById('toolbars');
+const appHeaderHider = document.getElementById('app-header-hider');
 const fileUpload = document.getElementById('ifc-file-upload') as HTMLInputElement;
 const projection = document.getElementById('projection') as HTMLSelectElement;
 const navigation = document.getElementById('navigation') as HTMLSelectElement;
@@ -97,7 +99,7 @@ async function Initialize(): Promise<void> {
     InitializeTransformControls();
     InitializeComponents();
     InitializeTools();
-    InitializeInputs();
+    InitializeHeader();
     InitializeWindows();
 
     webIfc.SetWasmPath("https://unpkg.com/web-ifc@0.0.66/", true);
@@ -278,7 +280,12 @@ async function Initialize(): Promise<void> {
         })
     }
 
-    function InitializeInputs() {
+    function InitializeHeader() {
+        appHeaderHider.onclick = () => {
+            const isOpen = !appHeaderHider.classList.toggle('app-header-hider-closed');
+            toolbars.style.height = isOpen ? '100px' : '0';
+        };
+
         fileUpload.addEventListener('input', () => {
             const file = fileUpload.files[0];
             if (!file)

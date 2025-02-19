@@ -14,6 +14,7 @@ body, html {
     overflow: hidden;
     color: var(--text-color);
     font-family: Arial, sans-serif;
+    flex-direction: column;
 }
 
 #container {
@@ -71,7 +72,7 @@ body, html {
 
 .controls {
     position: absolute;
-    display: flex;
+    display: none;
     flex-direction: column;
     width: 200px;
     top: 5px;
@@ -114,6 +115,7 @@ body, html {
 
 .selector {
     padding-left: 6px;
+    margin: 5px 0px 5px 0px;
 }
 
 .selector:focus {
@@ -151,6 +153,5 @@ body, html {
 
 .tool-selected {
     color: black;
-    background-color: #f1f1f1;
+    background-color: #f1f1f1 !important;
 }
-
