@@ -382,6 +382,10 @@ async function Initialize(): Promise<void> {
             cameraInput.sub(new THREE.Vector3(Number(e.key == 'w') + -Number(e.key == 's'), Number(e.key == 'd') + -Number(e.key == 'a'), -Number(e.key == ' ') + Number(e.key == 'Shift')))
         })
 
+        world.renderer.onResize.add(()=>{
+            world.renderer.three.render(world.scene.three, world.camera.three)
+        })
+
         const cameraControls = world.camera.controls;
         const clock = new THREE.Clock();
         clock.start();
