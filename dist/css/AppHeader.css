@@ -1,5 +1,6 @@
 #app-header {
     display: flex;
+    flex: 1 0 auto;
     flex-direction: row;
     position: relative;
     width: 100%;
@@ -7,6 +8,7 @@
     z-index: 100;
     border: 0px solid var(--accent-color);
     border-bottom-width: 2px;
+    transition: height .2s;
 }
 
 #app-header-hider {
