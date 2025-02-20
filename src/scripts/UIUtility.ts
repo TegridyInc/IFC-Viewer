@@ -88,8 +88,10 @@ export function CreateWindow(name:string, parent:HTMLElement) : [HTMLElement, HT
         window.style.top = `${window.offsetTop + e.movementY}px`;
         window.style.left = `${window.offsetLeft + e.movementX}px`;
     };
-    windowHeader.addEventListener("mousedown", () => document.addEventListener("mousemove", moveWindowFunc))
-    document.addEventListener("mouseup", () => document.removeEventListener("mousemove", moveWindowFunc))
+    windowHeader.addEventListener("mousedown", () => {
+        document.addEventListener("mousemove", moveWindowFunc)
+        document.addEventListener("mouseup", () => document.removeEventListener("mousemove", moveWindowFunc), {once:true})
+    })
 
     const windowLabel = document.createElement('div');
     windowLabel.innerHTML = name;

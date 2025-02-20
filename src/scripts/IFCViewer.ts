@@ -34,6 +34,7 @@ const moveTool = document.getElementById('move')
 const selectTool = document.getElementById('select');
 
 // Inputs
+const appHeader = document.getElementById('app-header')
 const toolbars = document.getElementById('toolbars');
 const appHeaderHider = document.getElementById('app-header-hider');
 const fileUpload = document.getElementById('ifc-file-upload') as HTMLInputElement;
@@ -283,7 +284,7 @@ async function Initialize(): Promise<void> {
     function InitializeHeader() {
         appHeaderHider.onclick = () => {
             const isOpen = !appHeaderHider.classList.toggle('app-header-hider-closed');
-            toolbars.style.height = isOpen ? '100px' : '0';
+            appHeader.style.height = isOpen ? '100px' : '0px';
         };
 
         fileUpload.addEventListener('input', () => {
@@ -361,6 +362,9 @@ async function Initialize(): Promise<void> {
         world.scene = new COM.SimpleScene(components);
         world.renderer = new COM.SimpleRenderer(components, container);
         world.camera = new COM.OrthoPerspectiveCamera(components);
+    
+        const canvas = world.renderer.three.getContext().canvas as HTMLElement;
+        canvas.classList.add('canvas')
         
         document.addEventListener('keydown', e => {
             if(!e.repeat) {
