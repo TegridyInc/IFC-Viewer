@@ -10,21 +10,6 @@
     background: black;
     overflow: hidden;
     align-items: stretch;
-
-    ::-webkit-scrollbar {
-        background: inherit;
-        width: 12px;
-        border-radius: 2px;
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background: #cccccc;
-    }
-
-    ::-webkit-scrollbar-corner {
-        border: 0;
-        color: white;
-    }
 }
 
 .window-header {
@@ -62,4 +47,12 @@
     overflow-x: hidden;
     overflow-y: scroll;
     resize: both;
+}
+
+.window-container-docked {
+    min-width: unset;
+    max-height: unset;
+    width: 100% !important;
+    height: 100% !important;
+    resize: none;
 }
