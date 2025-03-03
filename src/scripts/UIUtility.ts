@@ -1,3 +1,6 @@
+import './DockerUtility';
+import { RegisterWindow } from './DockerUtility';
+
 interface FoldoutData {
     parent:HTMLElement;
     header:HTMLElement;
@@ -108,6 +111,8 @@ export function CreateWindow(name:string, parent:HTMLElement) : [HTMLElement, HT
     const windowContainer = document.createElement('div');
     windowContainer.classList.add('window-container');
     window.append(windowContainer);
+
+    RegisterWindow(window, windowHeader);
 
     return [window, windowContainer];
 }

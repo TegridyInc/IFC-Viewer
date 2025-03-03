@@ -362,9 +362,6 @@ async function Initialize(): Promise<void> {
         world.scene = new COM.SimpleScene(components);
         world.renderer = new COM.SimpleRenderer(components, container);
         world.camera = new COM.OrthoPerspectiveCamera(components);
-    
-        const canvas = world.renderer.three.getContext().canvas as HTMLElement;
-        canvas.classList.add('canvas')
         
         document.addEventListener('keydown', e => {
             if(!e.repeat) {
@@ -387,6 +384,7 @@ async function Initialize(): Promise<void> {
         })
 
         world.renderer.onResize.add(()=>{
+            world.camera.updateAspect();
             world.renderer.three.render(world.scene.three, world.camera.three)
         })
 
@@ -395,6 +393,9 @@ async function Initialize(): Promise<void> {
         clock.start();
         setInterval(()=> {
             const deltaTime = clock.getDelta();
+            
+            if(cameraInput.length() == 0)
+                return;
 
             const input = cameraInput.clone().multiplyScalar(deltaTime * 10);
             cameraControls.truck(input.y, input.z, true);

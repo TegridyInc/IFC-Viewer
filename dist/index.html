@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="utf-8" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
@@ -12,56 +13,68 @@
     <link rel="stylesheet" href="./css/ModelManager.css">
     <link rel="stylesheet" href="./css/Properties.css">
 </head>
+
 <body>
     <div hidden>
         <div class="controls">
             <button id="open-properties" class="big-button control">Properties</button>
         </div>
     </div>
-    <div class="root">
-
-        <div id="app-header">
-            <div id="toolbars">
-                <div class="toolbar">
-                    <div class="toolbar-container">
-                        <select id="projection" class="control selector">
-                            <option value="perspective">Perspective</option>
-                            <option value="orthographic">Orthographic</option>
-                        </select>
-                        <select id="navigation" class="control selector">
-                            <option value="Orbit">Orbit</option>
-                            <option value="FirstPerson">First Person</option>
-                        </select>
-                    </div>
-                    <div class="toolbar-name">Camera</div>
+    <div id="app-header">
+        <div id="toolbars">
+            <div class="toolbar">
+                <div class="toolbar-container">
+                    <select id="projection" class="control selector">
+                        <option value="perspective">Perspective</option>
+                        <option value="orthographic">Orthographic</option>
+                    </select>
+                    <select id="navigation" class="control selector">
+                        <option value="Orbit">Orbit</option>
+                        <option value="FirstPerson">First Person</option>
+                    </select>
                 </div>
-                <div class="toolbar-divider"></div>
-                <div class="toolbar">
-                    <div class="toolbar-container">
-                        <i class="small-button unselectable material-symbols-outlined" id="move" title="Select Model">open_with</i>
-                        <i class="small-button tool-selected unselectable material-symbols-outlined" id="select" title="Select Object">arrow_selector_tool</i>
-                    </div>
-                    <div class="toolbar-name">Tool</div>
-                </div>
-                <div class="toolbar-divider"></div>
-                <div class="toolbar">
-                    <div class="toolbar-container model-grid">
-                        <i class="small-button unselectable material-symbols-outlined" id="open-model-manager" title="Model Manager">menu</i>
-                        <label class="small-button unselectable material-symbols-outlined" for="ifc-file-upload" title="Upload IFC Model">
-                            upload_file
-                            <input type="file" id="ifc-file-upload" accept=".ifc" hidden/>
-                        </label>
-                    </div>
-                    <div class="toolbar-name">Model</div>
-                </div>
-                <div class="toolbar-divider"></div>
+                <div class="toolbar-name">Camera</div>
             </div>
-            <i class="unselectable material-symbols-outlined app-header-hider-closed" id="app-header-hider"></i>
+            <div class="toolbar-divider"></div>
+            <div class="toolbar">
+                <div class="toolbar-container">
+                    <i class="small-button unselectable material-symbols-outlined" id="move"
+                        title="Select Model">open_with</i>
+                    <i class="small-button tool-selected unselectable material-symbols-outlined" id="select"
+                        title="Select Object">arrow_selector_tool</i>
+                </div>
+                <div class="toolbar-name">Tool</div>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="toolbar">
+                <div class="toolbar-container model-grid">
+                    <i class="small-button unselectable material-symbols-outlined" id="open-model-manager"
+                        title="Model Manager">menu</i>
+                    <label class="small-button unselectable material-symbols-outlined" for="ifc-file-upload"
+                        title="Upload IFC Model">
+                        upload_file
+                        <input type="file" id="ifc-file-upload" accept=".ifc" hidden />
+                    </label>
+                </div>
+                <div class="toolbar-name">Model</div>
+            </div>
+            <div class="toolbar-divider"></div>
         </div>
-        <div id="viewport">
-            <div class="docker">
+        <i class="unselectable material-symbols-outlined app-header-hider-closed" id="app-header-hider"></i>
+    </div>
+    <div id="viewport">
+        <div class="docker">
+            <div class="docker-tabs">
             </div>
-            <div id="container"></div>
+            <div class="docker-container"></div>
+            <div class="docker-resizer right"></div>
+        </div>
+        <div id="container"></div>
+        <div class="docker">
+            <div class="docker-tabs">
+            </div>
+            <div class="docker-container"></div>
+            <div class="docker-resizer left"></div>
         </div>
     </div>
     <script src="bundle.js"></script>
