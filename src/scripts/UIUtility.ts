@@ -1,10 +1,16 @@
-import './DockerUtility';
-import { RegisterWindow } from './DockerUtility';
+import * as DockerUtility from './DockerUtility';
+import * as IFCViewer from './IFCViewer'
 
 interface FoldoutData {
     parent:HTMLElement;
     header:HTMLElement;
     container:HTMLElement;
+}
+
+var ModelManagerContainer: HTMLElement;
+
+export function Initialize(modelManagerContainer:HTMLElement) {
+    ModelManagerContainer = modelManagerContainer;
 }
 
 export function CreateFoldout(name: string, parent:HTMLElement, onOpen?:()=>Promise<void>, onClosed?:()=>Promise<void>): FoldoutData {
@@ -78,8 +84,10 @@ export function CreateFoldoutElement(label:string, value?:any, parent?:HTMLEleme
     parent?.append(foldoutElement);
 }
 
-export function CreateWindow(name:string, parent:HTMLElement) : [HTMLElement, HTMLElement] {
+export function CreateWindow(name:string, parent:HTMLElement, id?:string) : [HTMLElement, HTMLElement] {
     const window = document.createElement('div');
+    if(id)
+        window.id = id;
     window.classList.add('window');
     parent.append(window);
 
@@ -112,7 +120,7 @@ export function CreateWindow(name:string, parent:HTMLElement) : [HTMLElement, HT
     windowContainer.classList.add('window-container');
     window.append(windowContainer);
 
-    RegisterWindow(window, windowHeader);
+    DockerUtility.RegisterWindow(window);
 
     return [window, windowContainer];
 }

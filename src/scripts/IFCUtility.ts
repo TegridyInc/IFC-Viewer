@@ -4,11 +4,9 @@ import * as FRA from '@thatopen/fragments';
 import * as THREE from 'three'
 import * as WEBIFC from 'web-ifc';
 import * as UIUtility from './UIUtility';
+import * as Components from './Components'
 
 var ifcAPI:WEBIFC.IfcAPI;
-var Culler: COM.MeshCullerRenderer;
-var Highlighter:OBF.Highlighter;
-var BoundingBoxer:COM.BoundingBoxer;
 
 interface ObjectsData {
     objects: { [attibute: string]: any }[];
@@ -22,19 +20,16 @@ export interface BoundingBoxData {
     boxMesh:THREE.Mesh;
 }
 
-export async function Setup(api: WEBIFC.IfcAPI, culler:COM.MeshCullerRenderer, highlighter:OBF.Highlighter, boundingBoxer:COM.BoundingBoxer) {
+export async function Setup(api: WEBIFC.IfcAPI) {
     ifcAPI = api;
-    Culler = culler;
-    Highlighter = highlighter;
-    BoundingBoxer = boundingBoxer;
 }
 
 export function CreateBoundingBox(model:FRA.FragmentsGroup, offsetModel?:boolean, color?:THREE.ColorRepresentation) : BoundingBoxData {
-    BoundingBoxer.reset();
-    BoundingBoxer.add(model);
-    const box3 = BoundingBoxer.get();
+    Components.boundingBoxer.reset();
+    Components.boundingBoxer.add(model);
+    const box3 = Components.boundingBoxer.get();
 
-    const boxMesh = BoundingBoxer.getMesh().clone();
+    const boxMesh = Components.boundingBoxer.getMesh().clone();
     model.add(boxMesh);
     boxMesh.visible = false;
     
@@ -52,7 +47,7 @@ export function CreateBoundingBox(model:FRA.FragmentsGroup, offsetModel?:boolean
     outline.visible = false;
     model.add(outline)
 
-    BoundingBoxer.dispose();
+    Components.boundingBoxer.dispose();
     return {outline, boxMesh: boxMesh};
 }
 
@@ -87,7 +82,7 @@ export async function CreateTypeFoldouts(model: FRA.FragmentsGroup, data: Uint8A
 
     for (const object of objects) {
         const name = ifcAPI.GetNameFromTypeCode(object.type);
-        Highlighter.add(name, new THREE.Color(1,0,0))
+        Components.highlighter.add(name, new THREE.Color(1,0,0))
 
         var ids:number[] = [];
         object.threeObjects.forEach(threeObject=> {
@@ -114,24 +109,26 @@ export async function CreateTypeFoldouts(model: FRA.FragmentsGroup, data: Uint8A
               g: parseInt(result[2], 16) / 255,
               b: parseInt(result[3], 16) / 255
             };
-            const color = Highlighter.colors.get(name);
+            const color = Components.highlighter.colors.get(name);
             if(color)
                 color.set(rgb.r, rgb.g, rgb.b);
         });
+        
         UIUtility.CreateButton('light_off', data.header, (e)=>{
             const button = e.target as HTMLElement;
             const isHighlighted = button.innerHTML == 'lightbulb';
             button.innerHTML = isHighlighted ? 'light_off' : 'lightbulb';
 
-            Highlighter.highlightByID(name, isHighlighted ? {} : object.fragmentIDMap, true)
+            Components.highlighter.highlightByID(name, isHighlighted ? {} : object.fragmentIDMap, true)
         });
+
         UIUtility.CreateButton('visibility', data.header, (e)=>{
             const button = e.target as HTMLElement;
             const isVisible = button.innerHTML == 'visibility';
             button.innerHTML = isVisible ? 'visibility_off' : 'visibility';
 
             for(const threeObject of object.threeObjects) {
-                const colorMesh = Culler.colorMeshes.get(threeObject.uuid);
+                const colorMesh = Components.culler.colorMeshes.get(threeObject.uuid);
                 if(!colorMesh) {
                     threeObject.visible = !isVisible;
                     continue;
@@ -143,7 +140,7 @@ export async function CreateTypeFoldouts(model: FRA.FragmentsGroup, data: Uint8A
                     colorMesh.visible = true;
             }
 
-            Culler.needsUpdate = true;
+            Components.culler.needsUpdate = true;
         });
     }
 

@@ -34,12 +34,13 @@ for (const docker of dockerElements) {
     AddDocker(docker as HTMLElement);
 }
 
-export function RegisterWindow(root: HTMLElement, header: HTMLElement) {
+export function RegisterWindow(root: HTMLElement) {
+    const header = root.getElementsByClassName('window-header').item(0) as HTMLElement;
     header.addEventListener("mousedown", () => {
         selectedWindow = {
             root: root,
             header: header,
-            label: header.getElementsByClassName('window-label').item(0) as HTMLElement,
+            label: root.getElementsByClassName('window-label').item(0) as HTMLElement,
             container: root.getElementsByClassName('window-container').item(0) as HTMLElement
         };
 
@@ -146,6 +147,7 @@ function AddDocker(docker: HTMLElement) {
         dockerContainer: dockerContainer,
         selectedTab: null,
     };
+
     function ResizeDocker(e: MouseEvent) {
         const width = docker.clientWidth;
         dockerData.position.x = docker.offsetLeft
@@ -153,10 +155,7 @@ function AddDocker(docker: HTMLElement) {
         docker.style.width = (width + e.movementX * direction) + 'px';
     }
 
-
     dockers.push(dockerData)
-
-    console.log(dockers)
 }
 
 function RemoveDocker(docker: HTMLElement) {
@@ -178,7 +177,6 @@ function RemoveDocker(docker: HTMLElement) {
 }
 
 function CheckDockers(e: MouseEvent) {
-    console.log(dockers)
     for (const docker of dockers) {
         if (e.clientX < docker.position.x || e.clientX > docker.position.x + docker.width) {
             selectedDocker = null;
