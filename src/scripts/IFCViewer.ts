@@ -2,6 +2,7 @@ import * as Stats from 'stats.js';
 import * as WEBIFC from 'web-ifc'
 import * as FBX from 'three/examples/jsm/loaders/FBXLoader';
 import * as THREE from 'three';
+import * as FRA from '@thatopen/fragments'
 
 import * as Components from './Components';
 import * as IFCLoader from './IFCLoader'
@@ -27,14 +28,11 @@ globalThis.debug = () => {
 
 export const container = document.getElementById('container');
 export var modelManagerContainer: HTMLElement;
-export const openModelManager = document.getElementById('open-model-manager')
 
 export var propertyTree: HTMLElement
 export var propertyTreeContainer: HTMLElement;
 
 export var propertiesContainer: HTMLElement;
-export const openProperties = document.getElementById('open-properties');
-
 
 export const webIfc = new WEBIFC.IfcAPI();
 export const cameraFitting = {
@@ -57,6 +55,10 @@ var mouseMoveAmount = 0;
 Initialize();
 
 async function Initialize(): Promise<void> {
+    webIfc.SetWasmPath("https://unpkg.com/web-ifc@0.0.66/", true);
+    await webIfc.Init();
+    IFCUtility.Setup(webIfc);
+
     Components.Initialize();
     Toolbars.Initialize();
 
@@ -66,11 +68,6 @@ async function Initialize(): Promise<void> {
     InitializeWindows();
     InitializeTransformControls();
     InitializeDebugging();
-
-    webIfc.SetWasmPath("https://unpkg.com/web-ifc@0.0.66/", true);
-    await webIfc.Init();
-    IFCUtility.Setup(webIfc);
-
 
     function InitializeTransformControls() {
         container.addEventListener('mousedown', () => {
@@ -199,16 +196,19 @@ async function Initialize(): Promise<void> {
     function InitializeWindows() {
         const modelManagerWindow = UIUtility.CreateWindow('Model Manager', document.body);
         modelManagerContainer = modelManagerWindow[1];
+        const openModelManager = document.getElementById('open-model-manager')
         openModelManager.addEventListener('click', () => modelManagerWindow[0].style.visibility = 'visible')
 
         const propertiesWindow = UIUtility.CreateWindow('Properties', document.body);
         propertiesContainer = propertiesWindow[1];
+        const openProperties = document.getElementById('open-properties')
         openProperties.addEventListener('click', () => propertiesWindow[0].style.visibility = 'visible')
+
+        Components.highlighter.events.select.onHighlight.add(CreateProperties)
 
         const propertyTreeWindow = UIUtility.CreateWindow('Property Tree', document.body);
         propertyTree = propertyTreeWindow[0];
         propertyTreeContainer = propertyTreeWindow[1];
-
     }
 
     function InitializeDebugging() {
@@ -259,4 +259,44 @@ export function ClearSelection() {
     boundingBoxes.forEach(boundingBox => {
         boundingBox.outline.visible = false;
     })
+}
+
+async function CreateProperties(fragmentIDMap:FRA.FragmentIdMap) {
+    const sceneObjects = Components.world.scene.three.children;
+    propertiesContainer.innerHTML = '';
+
+    var idsFound = []
+    for(const fragmentIDs in fragmentIDMap) {
+        var modelID = -1;
+
+        sceneObjects.forEach((object)=>{
+            if(!(object instanceof FRA.FragmentsGroup))
+                return;
+            object.children.forEach(child =>{
+                if(child.uuid == fragmentIDs) {
+                    modelID = object.userData.modelID;
+                    return;
+                }
+            })
+        })
+
+        if(modelID == -1)
+            continue;
+
+        for(const fragmentID of fragmentIDMap[fragmentIDs]) {
+            const value = idsFound.find(value =>{
+                if(value.modelID == modelID) {
+                    if(value.fragmentID == fragmentID)
+                        return true;
+                }
+            })
+
+            if(value != undefined)
+                continue;
+            
+            idsFound.push({modelID: modelID, fragmentID: fragmentID})
+            await IFCUtility.CreateProperties(modelID, fragmentID)
+        }
+
+    }
 }

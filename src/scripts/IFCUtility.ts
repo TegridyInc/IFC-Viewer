@@ -3,6 +3,7 @@ import * as OBF from '@thatopen/components-front';
 import * as FRA from '@thatopen/fragments';
 import * as THREE from 'three'
 import * as WEBIFC from 'web-ifc';
+import * as IFCViewer from './IFCViewer'
 import * as UIUtility from './UIUtility';
 import * as Components from './Components'
 
@@ -49,6 +50,18 @@ export function CreateBoundingBox(model:FRA.FragmentsGroup, offsetModel?:boolean
 
     Components.boundingBoxer.dispose();
     return {outline, boxMesh: boxMesh};
+}
+
+export async function CreateProperties(modelID:number, propertyID:number) {
+    const container = IFCViewer.propertiesContainer;
+    
+    const property = await IFCViewer.webIfc.properties.getItemProperties(modelID, propertyID);
+    const propertyFoldout = UIUtility.CreateFoldout(property.Name.value, container);
+
+    await CreateAttributesFoldout(property, propertyFoldout.container, modelID)
+    await CreateMaterialFoldout(property, propertyFoldout.container, modelID);
+    await CreatePropertySetsFoldout(property, propertyFoldout.container, modelID);
+    await CreateSpatialElementFoldout(property, propertyFoldout.container, modelID)
 }
 
 export async function CreateTypeFoldouts(model: FRA.FragmentsGroup, data: Uint8Array, container: HTMLElement, modelID: number) {

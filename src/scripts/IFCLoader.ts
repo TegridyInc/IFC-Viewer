@@ -13,7 +13,10 @@ export async function LoadIFCModelUsingURL(url : string) : Promise<FRA.Fragments
 
 export async function LoadIFCModel(arrayBuffer: ArrayBuffer, name: string, focus?:boolean) {
     const data = new Uint8Array(arrayBuffer);
+    const modelID = IFCViewer.webIfc.OpenModel(data);
     const model = await Components.ifcloader.load(data);
+
+    model.userData.modelID = modelID;
     model.name = name;
 
     const boundingBoxData = IFCUtility.CreateBoundingBox(model, true);
@@ -37,7 +40,6 @@ export async function LoadIFCModel(arrayBuffer: ArrayBuffer, name: string, focus
 }
 
 function AddModelToManager(model: FRA.FragmentsGroup, data:Uint8Array, boundingBoxData:IFCUtility.BoundingBoxData) {
-    const modelID = IFCViewer.webIfc.OpenModel(data);
     const modelItem = document.createElement('div');
     modelItem.classList.add("model-item")
     IFCViewer.modelManagerContainer.append(modelItem);
@@ -56,7 +58,7 @@ function AddModelToManager(model: FRA.FragmentsGroup, data:Uint8Array, boundingB
     }, 'Bounding Box Color');
 
     UIUtility.CreateButton('list', modelItem, () =>{
-        IFCUtility.CreateTypeFoldouts(model, data, IFCViewer.propertyTreeContainer, modelID);
+        IFCUtility.CreateTypeFoldouts(model, data, IFCViewer.propertyTreeContainer, model.userData.modelID);
         IFCViewer.propertyTree.style.visibility = 'visible'
     }, 'Property Tree');
 
@@ -83,7 +85,7 @@ function AddModelToManager(model: FRA.FragmentsGroup, data:Uint8Array, boundingB
             IFCViewer.boundingBoxes.splice(index, 1);
         }
 
-        IFCViewer.webIfc.CloseModel(modelID);
+        IFCViewer.webIfc.CloseModel(model.userData.modelID);
         IFCViewer.modelManagerContainer.removeChild(modelItem);
         model.dispose();
     }, 'Delete');
