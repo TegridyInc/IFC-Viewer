@@ -125,11 +125,15 @@ export function CreateWindow(name:string, parent:HTMLElement, id?:string) : [HTM
     return [window, windowContainer];
 }
 
-export function CreateButton(iconName:string, parent:HTMLElement, onClick:(e:MouseEvent)=>void, tooltip?:string) {
+export function CreateButton(iconName:string, parent:HTMLElement, onClick:(e:MouseEvent)=>void, tooltip?:string, customIcon?:boolean) {
     const button = document.createElement('i');
-    button.classList.add('small-button', 'material-symbols-outlined', 'unselectable');
+    button.classList.add('small-button', 'unselectable');
+    button.classList.add(customIcon ? 'custom-icons' : 'material-symbols-outlined')
 
-    button.innerHTML = iconName;
+    if(customIcon)
+        button.classList.add(iconName);
+    else
+        button.innerHTML = iconName;
     button.onclick = onClick;
 
     if(tooltip)
