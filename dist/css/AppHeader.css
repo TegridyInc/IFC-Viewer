@@ -64,11 +64,11 @@
 }
 
 .toolbar-container {
+    position: relative;
     display: flex;
     height: 80px;
     min-width: 100%;
     padding: 2px;
-    overflow: hidden;
     box-sizing: border-box;
     padding-top: 10px;
     transition: height .2s;

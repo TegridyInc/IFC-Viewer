@@ -1,3 +1,4 @@
+import { clamp, round } from 'lodash';
 import * as DockerUtility from './DockerUtility';
 import * as IFCViewer from './IFCViewer'
 
@@ -153,4 +154,76 @@ export function CreateColorInput(hex:string, parent:HTMLElement, onValueChanged:
     if(tooltip)
         colorInput.title = tooltip;
     parent.append(colorInput);
+}
+
+export function CreateSlider(minValue:number, maxValue:number, container: HTMLElement, valueChanged: (value:number)=>void, absolute?:boolean) : HTMLElement {
+    const slider = document.createElement('div')
+    container.append(slider)
+    slider.classList.add('slider')
+
+    if(absolute)
+        slider.classList.add('slider-absolute')
+
+    const min = document.createElement('div')
+    min.innerHTML = minValue.toString();
+    slider.append(min)
+    
+    const sliderRail = document.createElement('div')
+    sliderRail.classList.add('slider-rail')
+    slider.append(sliderRail);
+
+    const sliderNob = document.createElement('div')
+    sliderNob.style.left = 'clamp(0%, 0px, 100%)'
+    sliderNob.classList.add('slider-nob')
+    sliderRail.append(sliderNob)
+
+    const sliderValue = document.createElement('div');
+    sliderValue.innerHTML = minValue.toString();
+    sliderValue.classList.add('slider-value')
+    sliderNob.append(sliderValue)
+
+    const max = document.createElement('div')
+    max.innerHTML = maxValue.toString();
+    slider.append(max)
+
+    sliderNob.addEventListener("mousedown", (e) => {
+        e.stopImmediatePropagation();
+        sliderValue.style.visibility = 'visible'
+
+        function MoveNob(e:MouseEvent) {
+          var parsedValue = parseInt(sliderNob.style.left.split(" ")[1]);
+          parsedValue += e.movementX;
+          sliderNob.style.left = `clamp(0%, ${parsedValue}px, 100%)`;
+
+          const normalized = (1 / sliderRail.clientWidth) * parsedValue;
+          var value = (maxValue - minValue) * normalized + minValue;
+          
+          value = round(value)
+          value = clamp(value, minValue, maxValue)
+
+          sliderValue.innerHTML = value.toString();
+        }
+      
+        document.addEventListener("mousemove", MoveNob);
+        document.addEventListener(
+          "mouseup",
+          (e) => {
+            document.removeEventListener("mousemove", MoveNob);
+            sliderValue.style.visibility = 'hidden'
+           
+            var parsedValue = parseInt(sliderNob.style.left.split(" ")[1]);
+      
+            parsedValue = parsedValue > sliderRail.clientWidth ? sliderRail.clientWidth : parsedValue < 0 ? 0 : parsedValue;
+            sliderNob.style.left = `clamp(0%, ${parsedValue}px, 100%)`;
+      
+            const normalized = (1 / sliderRail.clientWidth) * parsedValue;
+            const value = (maxValue - minValue) * normalized + minValue;
+
+            valueChanged(value);
+          },
+          { once: true }
+        );
+      });
+
+    return slider;
 }

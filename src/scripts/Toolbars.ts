@@ -4,12 +4,14 @@ import * as COM from '@thatopen/components'
 import * as IFCViewer from './IFCViewer'
 import * as Components from './Components'
 import * as IFCLoader from './IFCLoader';
+import * as UIUtility from './UIUtility';
 
 const appHeader = document.getElementById('app-header')
 const appHeaderHider = document.getElementById('app-header-hider');
 const fileUpload = document.getElementById('ifc-file-upload') as HTMLInputElement;
 const projection = document.getElementById('projection') as HTMLSelectElement;
 const navigation = document.getElementById('navigation') as HTMLSelectElement;
+const cullerThreshold = document.getElementById('culler-threshold');
 
 export const moveTool = document.getElementById('move')
 export const selectTool = document.getElementById('select');
@@ -97,4 +99,15 @@ export function Initialize() {
     
         Components.world.camera.set(navigation.value as COM.NavModeID);
     };
+
+    const slider = UIUtility.CreateSlider(0, 50, cullerThreshold, (value)=>{
+        Components.culler.config.threshold = value;
+        Components.culler.needsUpdate = true;
+    }, true);
+    slider.style.visibility = 'hidden';
+
+    cullerThreshold.addEventListener('click', (e)=>{
+        e.stopImmediatePropagation();
+        slider.style.visibility = slider.style.visibility == 'hidden' ? 'visible' : 'hidden';
+    })
 }
