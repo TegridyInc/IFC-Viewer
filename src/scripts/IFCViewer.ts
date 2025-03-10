@@ -127,6 +127,9 @@ async function Initialize(): Promise<void> {
                 Components.world.camera.controls.enabled = true;
                 document.removeEventListener('mousemove', MoveModel)
 
+                if(!selectedModel)
+                    return;
+
                 selectedModel.updateWorldMatrix(false, true);
                 for (const child of selectedModel.children) {
                     const colorMesh = Components.culler.colorMeshes.get(child.uuid)
