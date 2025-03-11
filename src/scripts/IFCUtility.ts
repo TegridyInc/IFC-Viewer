@@ -199,8 +199,14 @@ async function CreateAttributesFoldout(property: { [attribute: string]: any }, c
 async function CreateMaterialFoldout(property: { [attribute: string]: any }, container: HTMLElement, modelID: number) {
     const materials = await ifcAPI.properties.getMaterialsProperties(modelID, property.expressID);
     materials.forEach(async materialProperty => {
-        if (materialProperty.ForLayerSet) {
-            const layerSet = await ifcAPI.properties.getItemProperties(modelID, materialProperty.ForLayerSet.value);
+        console.log(materialProperty)
+        if (materialProperty.ForLayerSet || materialProperty.MaterialLayers) {
+            var layerSet;
+            if(materialProperty.ForLayerSet)
+                layerSet = await ifcAPI.properties.getItemProperties(modelID, materialProperty.ForLayerSet.value);
+            else
+                layerSet = materialProperty;
+            
             const layerSetContainerData = UIUtility.CreateFoldout('Layers', container);
 
             for (const layerHandle in layerSet.MaterialLayers) {
