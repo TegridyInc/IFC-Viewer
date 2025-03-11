@@ -156,7 +156,9 @@ async function Initialize(): Promise<void> {
                 left.z = Math.sin(yaw);
 
                 const up = forward.clone().cross(left);
-                const mouseMovement = new THREE.Vector2(e.movementX * .002 * result.distance, e.movementY * .002 * result.distance);
+
+                const distance = Components.world.camera.projection.current == 'Perspective' ? result.distance : (45 / Components.world.camera.threeOrtho.zoom);
+                const mouseMovement = new THREE.Vector2(e.movementX * .002 * distance, e.movementY * .002 * distance);
 
                 const offsetX = left.x * -mouseMovement.x + (up.x * -mouseMovement.y * (forward.y > 0 ? -1 : 1));
                 const offsetY = Math.abs(up.y) * -mouseMovement.y;
