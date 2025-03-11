@@ -59,7 +59,9 @@ function AddModelToManager(model: FRA.FragmentsGroup, data:Uint8Array, boundingB
 
     UIUtility.CreateButton('list', modelItem, () =>{
         IFCUtility.CreateTypeFoldouts(model, data, IFCViewer.propertyTreeContainer, model.userData.modelID);
-        IFCViewer.propertyTree.style.visibility = 'visible'
+
+        if(IFCViewer.propertyTreeContainer.parentElement == IFCViewer.propertyTree)
+            IFCViewer.propertyTree.style.visibility = 'visible'
     }, 'Property Tree');
 
     UIUtility.CreateButton('visibility', modelItem, (e) => {

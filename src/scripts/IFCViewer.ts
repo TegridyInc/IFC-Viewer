@@ -202,12 +202,18 @@ async function Initialize(): Promise<void> {
         const modelManagerWindow = UIUtility.CreateWindow('Model Manager', document.body);
         modelManagerContainer = modelManagerWindow[1];
         const openModelManager = document.getElementById('open-model-manager')
-        openModelManager.addEventListener('click', () => modelManagerWindow[0].style.visibility = 'visible')
+        openModelManager.addEventListener('click', () => {
+            if(modelManagerWindow[1].parentElement == modelManagerWindow[0])
+                modelManagerWindow[0].style.visibility = 'visible'
+        })
 
         const propertiesWindow = UIUtility.CreateWindow('Properties', document.body);
         propertiesContainer = propertiesWindow[1];
         const openProperties = document.getElementById('open-properties')
-        openProperties.addEventListener('click', () => propertiesWindow[0].style.visibility = 'visible')
+        openProperties.addEventListener('click', () => { 
+            if(propertiesWindow[1].parentElement == propertiesWindow[0])
+                propertiesWindow[0].style.visibility = 'visible'
+        })
 
         Components.highlighter.events.select.onHighlight.add(CreateProperties)
 
