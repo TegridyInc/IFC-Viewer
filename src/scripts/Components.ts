@@ -63,23 +63,26 @@ export function Initialize() {
     });
 
     document.addEventListener('keydown', e => {
-        if(!e.repeat) {
-            if((e.key == 'w' && cameraInput.x != 1) || (e.key == 's' && cameraInput.x != -1))
-                cameraInput.add(new THREE.Vector3(Number(e.key == 'w') + -Number(e.key == 's'), 0, 0))
-            
-            if((e.key == 'd' && cameraInput.y != 1) || (e.key == 'a' && cameraInput.y != -1)) 
-                cameraInput.add(new THREE.Vector3(0, Number(e.key == 'd') + -Number(e.key == 'a'), 0))
-            
-            if((e.key == ' ' && cameraInput.z != -1) || (e.shiftKey && cameraInput.z != 1))
-                cameraInput.add(new THREE.Vector3(0, 0, -Number(e.key == ' ') + Number(e.key == 'Shift')))
-        }   
+        if(e.repeat) 
+            return;
+        const key = e.key.toLowerCase();
+  
+        if((key == 'w' && cameraInput.x != 1) || (key == 's' && cameraInput.x != -1))
+            cameraInput.add(new THREE.Vector3(Number(key == 'w') + -Number(key == 's'), 0, 0))
+        
+        if((key == 'd' && cameraInput.y != 1) || (key == 'a' && cameraInput.y != -1)) 
+            cameraInput.add(new THREE.Vector3(0, Number(key == 'd') + -Number(key == 'a'), 0))
+        
+        if((key == ' ' && cameraInput.z != 1) || (key == 'shift' && cameraInput.z != -1))
+            cameraInput.add(new THREE.Vector3(0, 0, Number(key == ' ') + -Number(key == 'shift')))
     })
     
     document.addEventListener('keyup', e => {
         if(e.repeat)
             return;
-        
-        cameraInput.sub(new THREE.Vector3(Number(e.key == 'w') + -Number(e.key == 's'), Number(e.key == 'd') + -Number(e.key == 'a'), -Number(e.key == ' ') + Number(e.key == 'Shift')))
+        const key = e.key.toLowerCase();
+  
+        cameraInput.sub(new THREE.Vector3(Number(key == 'w') + -Number(key == 's'), Number(key == 'd') + -Number(key == 'a'), Number(key == ' ') + -Number(key == 'shift')))
     })
 
     const cameraControls = world.camera.controls;
@@ -92,7 +95,8 @@ export function Initialize() {
             return;
 
         const input = cameraInput.clone().multiplyScalar(deltaTime * 10);
-        cameraControls.truck(input.y, input.z, true);
+        cameraControls.truck(input.y, 0, true);
+        cameraControls.elevate(input.z, true)
         cameraControls.forward(input.x, true);
     }, 10);
 }
