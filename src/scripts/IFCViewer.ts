@@ -127,7 +127,7 @@ async function Initialize(): Promise<void> {
                 Components.world.camera.controls.enabled = true;
                 document.removeEventListener('mousemove', MoveModel)
 
-                if(!selectedModel)
+                if (!selectedModel)
                     return;
 
                 selectedModel.updateWorldMatrix(false, true);
@@ -203,15 +203,15 @@ async function Initialize(): Promise<void> {
         modelManagerContainer = modelManagerWindow[1];
         const openModelManager = document.getElementById('open-model-manager')
         openModelManager.addEventListener('click', () => {
-            if(modelManagerWindow[1].parentElement == modelManagerWindow[0])
+            if (modelManagerWindow[1].parentElement == modelManagerWindow[0])
                 modelManagerWindow[0].style.visibility = 'visible'
         })
 
         const propertiesWindow = UIUtility.CreateWindow('Properties', document.body);
         propertiesContainer = propertiesWindow[1];
         const openProperties = document.getElementById('open-properties')
-        openProperties.addEventListener('click', () => { 
-            if(propertiesWindow[1].parentElement == propertiesWindow[0])
+        openProperties.addEventListener('click', () => {
+            if (propertiesWindow[1].parentElement == propertiesWindow[0])
                 propertiesWindow[0].style.visibility = 'visible'
         })
 
@@ -272,40 +272,40 @@ export function ClearSelection() {
     })
 }
 
-async function CreateProperties(fragmentIDMap:FRA.FragmentIdMap) {
+async function CreateProperties(fragmentIDMap: FRA.FragmentIdMap) {
     const sceneObjects = Components.world.scene.three.children;
     propertiesContainer.innerHTML = '';
 
     var idsFound = []
-    for(const fragmentIDs in fragmentIDMap) {
+    for (const fragmentIDs in fragmentIDMap) {
         var modelID = -1;
 
-        sceneObjects.forEach((object)=>{
-            if(!(object instanceof FRA.FragmentsGroup))
+        sceneObjects.forEach((object) => {
+            if (!(object instanceof FRA.FragmentsGroup))
                 return;
-            object.children.forEach(child =>{
-                if(child.uuid == fragmentIDs) {
+            object.children.forEach(child => {
+                if (child.uuid == fragmentIDs) {
                     modelID = object.userData.modelID;
                     return;
                 }
             })
         })
 
-        if(modelID == -1)
+        if (modelID == -1)
             continue;
 
-        for(const fragmentID of fragmentIDMap[fragmentIDs]) {
-            const value = idsFound.find(value =>{
-                if(value.modelID == modelID) {
-                    if(value.fragmentID == fragmentID)
+        for (const fragmentID of fragmentIDMap[fragmentIDs]) {
+            const value = idsFound.find(value => {
+                if (value.modelID == modelID) {
+                    if (value.fragmentID == fragmentID)
                         return true;
                 }
             })
 
-            if(value != undefined)
+            if (value != undefined)
                 continue;
-            
-            idsFound.push({modelID: modelID, fragmentID: fragmentID})
+
+            idsFound.push({ modelID: modelID, fragmentID: fragmentID })
             await IFCUtility.CreateProperties(modelID, fragmentID)
         }
 
