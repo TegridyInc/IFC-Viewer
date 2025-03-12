@@ -18,7 +18,8 @@
   "dependencies": {
     "@thatopen/components": "^2.4.3",
     "@thatopen/components-front": "^2.4.3",
-    "@thatopen/ui": "^2.4.1",
+    "@thatopen/fragments": "^2.4.0",
+    "@thatopen/ui": "^2.4.2",
     "@thatopen/ui-obc": "^2.4.1",
     "acorn": "^8.14.0",
     "ajv": "^6.12.6",
