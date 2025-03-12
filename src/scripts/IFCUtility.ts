@@ -67,6 +67,14 @@ export async function CreateProperties(modelID:number, propertyID:number) {
 export async function CreateTypeFoldouts(model: FRA.FragmentsGroup, data: Uint8Array, container: HTMLElement, modelID: number) {
     var objects: ObjectsData[] = [];
 
+    container.innerHTML = ''
+
+    const highlighter = Components.highlighter;
+    for(const selection in highlighter.selection) {
+        if(selection != 'hover' && selection != 'select') 
+            highlighter.remove(selection)
+    }
+
     for (const child of model.children) {
         
         if (!(child instanceof FRA.FragmentMesh))
@@ -191,8 +199,14 @@ async function CreateAttributesFoldout(property: { [attribute: string]: any }, c
 async function CreateMaterialFoldout(property: { [attribute: string]: any }, container: HTMLElement, modelID: number) {
     const materials = await ifcAPI.properties.getMaterialsProperties(modelID, property.expressID);
     materials.forEach(async materialProperty => {
-        if (materialProperty.ForLayerSet) {
-            const layerSet = await ifcAPI.properties.getItemProperties(modelID, materialProperty.ForLayerSet.value);
+        console.log(materialProperty)
+        if (materialProperty.ForLayerSet || materialProperty.MaterialLayers) {
+            var layerSet;
+            if(materialProperty.ForLayerSet)
+                layerSet = await ifcAPI.properties.getItemProperties(modelID, materialProperty.ForLayerSet.value);
+            else
+                layerSet = materialProperty;
+            
             const layerSetContainerData = UIUtility.CreateFoldout('Layers', container);
 
             for (const layerHandle in layerSet.MaterialLayers) {

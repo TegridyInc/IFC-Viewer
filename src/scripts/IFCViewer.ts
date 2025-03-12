@@ -127,6 +127,9 @@ async function Initialize(): Promise<void> {
                 Components.world.camera.controls.enabled = true;
                 document.removeEventListener('mousemove', MoveModel)
 
+                if(!selectedModel)
+                    return;
+
                 selectedModel.updateWorldMatrix(false, true);
                 for (const child of selectedModel.children) {
                     const colorMesh = Components.culler.colorMeshes.get(child.uuid)
@@ -153,7 +156,9 @@ async function Initialize(): Promise<void> {
                 left.z = Math.sin(yaw);
 
                 const up = forward.clone().cross(left);
-                const mouseMovement = new THREE.Vector2(e.movementX * .002 * result.distance, e.movementY * .002 * result.distance);
+
+                const distance = Components.world.camera.projection.current == 'Perspective' ? result.distance : (45 / Components.world.camera.threeOrtho.zoom);
+                const mouseMovement = new THREE.Vector2(e.movementX * .002 * distance, e.movementY * .002 * distance);
 
                 const offsetX = left.x * -mouseMovement.x + (up.x * -mouseMovement.y * (forward.y > 0 ? -1 : 1));
                 const offsetY = Math.abs(up.y) * -mouseMovement.y;
@@ -197,12 +202,18 @@ async function Initialize(): Promise<void> {
         const modelManagerWindow = UIUtility.CreateWindow('Model Manager', document.body);
         modelManagerContainer = modelManagerWindow[1];
         const openModelManager = document.getElementById('open-model-manager')
-        openModelManager.addEventListener('click', () => modelManagerWindow[0].style.visibility = 'visible')
+        openModelManager.addEventListener('click', () => {
+            if(modelManagerWindow[1].parentElement == modelManagerWindow[0])
+                modelManagerWindow[0].style.visibility = 'visible'
+        })
 
         const propertiesWindow = UIUtility.CreateWindow('Properties', document.body);
         propertiesContainer = propertiesWindow[1];
         const openProperties = document.getElementById('open-properties')
-        openProperties.addEventListener('click', () => propertiesWindow[0].style.visibility = 'visible')
+        openProperties.addEventListener('click', () => { 
+            if(propertiesWindow[1].parentElement == propertiesWindow[0])
+                propertiesWindow[0].style.visibility = 'visible'
+        })
 
         Components.highlighter.events.select.onHighlight.add(CreateProperties)
 
