@@ -13,6 +13,9 @@ const navigation = document.getElementById('navigation') as HTMLSelectElement;
 const openCameraSettings = document.getElementById('open-camera-settings');
 const cameraSettings = document.getElementById('camera-settings');
 
+const toolSelection = document.getElementById('tool-selection') as HTMLElement;
+const openToolSelection = document.getElementById('open-tool-selection') as HTMLElement;
+
 export const moveTool = document.getElementById('move')
 export const selectTool = document.getElementById('select');
 
@@ -29,6 +32,8 @@ export function Initialize() {
         selectTool.classList.remove('tool-selected')
         Components.highlighter.clear();
         Components.highlighter.enabled = false;
+        toolSelection.style.visibility = 'hidden';
+        openToolSelection.innerHTML = moveTool.innerHTML;
     })
 
     selectTool.addEventListener('click', () => {
@@ -38,7 +43,14 @@ export function Initialize() {
         Components.highlighter.enabled = true;
         IFCViewer.transformControls.visible = false;
         IFCViewer.ClearSelection();
+        toolSelection.style.visibility = 'hidden';
+        openToolSelection.innerHTML = selectTool.innerHTML;
     })
+
+    openToolSelection.onclick = () => {
+        toolSelection.style.visibility = 'visible'
+    }
+    toolSelection.style.visibility = 'hidden';
 
     document.addEventListener('keydown', (e) => {
         if (e.key == 'f') {

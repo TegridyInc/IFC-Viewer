@@ -221,3 +221,18 @@ html {
     color: black;
     background-color: #f1f1f1 !important;
 }
+
+#tool-selection {
+    width: 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--secondary-color);
+    bottom: 33px;
+    position: absolute;
+    border: 1px solid var(--accent-color);
+    z-index: -10;
+
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+}

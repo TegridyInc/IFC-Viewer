@@ -28,9 +28,16 @@
                 title="Upload IFC Model">
                 upload_file <input type="file" id="ifc-file-upload" accept=".ifc" hidden />
             </label>
-            <i class="small-button tool-selected unselectable material-symbols-outlined" id="select"
-                title="Select Object">arrow_selector_tool</i>
-            <i class="small-button unselectable material-symbols-outlined" id="move" title="Select Model">open_with</i>
+            <div>
+                <i class="small-button unselectable material-symbols-outlined" id="open-tool-selection"
+                    title="Select Tool">arrow_selector_tool</i>
+                <div id="tool-selection">
+                    <i class="small-button tool-selected unselectable material-symbols-outlined" id="select"
+                        title="Select Object">arrow_selector_tool</i>
+                    <i class="small-button unselectable material-symbols-outlined" id="move"
+                        title="Select Model">open_with</i>
+                </div>
+            </div>
             <i class="small-button unselectable material-symbols-outlined" id="open-properties"
                 title="Properties">data_object</i>
         </div>
