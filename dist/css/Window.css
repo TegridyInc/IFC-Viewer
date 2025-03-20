@@ -10,6 +10,7 @@
     background: black;
     overflow: hidden;
     align-items: stretch;
+    z-index: 1000;
 }
 
 .window-header {

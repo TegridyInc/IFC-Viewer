@@ -26,6 +26,8 @@ globalThis.debug = () => {
 }
 //#endregion
 
+export const viewport = document.getElementById('viewport');
+export const viewportLabel = document.getElementById('viewport-label')
 export const container = document.getElementById('container');
 export var modelManagerContainer: HTMLElement;
 
@@ -63,6 +65,17 @@ async function Initialize(): Promise<void> {
     Toolbars.Initialize();
 
     Components.world.camera.controls.addEventListener('control', ScaleTransformControls)
+
+    const MoveViewport = (e: MouseEvent) => {
+        viewport.style.top = `${viewport.offsetTop + e.movementY}px`;
+        viewport.style.left = `${viewport.offsetLeft + e.movementX}px`;
+    }
+    viewportLabel.addEventListener('mousedown', () =>{
+        document.addEventListener('mousemove', MoveViewport);
+        viewportLabel.addEventListener('mouseup', ()=>{
+            document.removeEventListener('mousemove', MoveViewport)
+        }, {once: true})
+    })
 
     selectedModel = null;
     InitializeWindows();

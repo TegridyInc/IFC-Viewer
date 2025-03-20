@@ -6,8 +6,6 @@ import * as Components from './Components'
 import * as IFCLoader from './IFCLoader';
 import * as UIUtility from './UIUtility';
 
-const appHeader = document.getElementById('app-header')
-const appHeaderHider = document.getElementById('app-header-hider');
 const fileUpload = document.getElementById('ifc-file-upload') as HTMLInputElement;
 const projection = document.getElementById('projection') as HTMLSelectElement;
 const navigation = document.getElementById('navigation') as HTMLSelectElement;
@@ -54,10 +52,7 @@ export function Initialize() {
         }
     })
 
-    appHeaderHider.onclick = () => {
-        const isOpen = !appHeaderHider.classList.toggle('app-header-hider-closed');
-        appHeader.style.height = isOpen ? '100px' : '0px';
-    };
+
     
     fileUpload.addEventListener('input', () => {
         const file = fileUpload.files[0];

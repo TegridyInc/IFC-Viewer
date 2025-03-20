@@ -1,34 +1,46 @@
 .docker {
     display: flex;
+    position: absolute;
     flex-direction: column;
     width: 200px;
-    height: 100%;
-    position: relative;
-    background-color: var(--primary-color);
-    flex: 1 0 auto;
-    resize: horizontal;
-    
+    height: calc(100% - 20px);
+    top: 50%;
+    background-color: var(--secondary-color);
+    border: 2px solid var(--accent-color);
+
+    transform: translateY(-50%);
+}
+
+.left.docker {
+    border-right-width: 0px;
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+}
+
+.right.docker {
+    border-left-width: 0px;
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
 }
 
 .docker-resizer {
     position: absolute;
-    display: flex;
     top: 0;
     height: 100%;
-    width: 5px;
+    width: 6px;
     cursor: w-resize;
-    background-color: rgba(255,255,255, .4);
+
     box-shadow: 1px;
 }
 
-.right {
+.right.docker-resizer {
     right: 0;
-    transform: translateX(100%);
+    transform: translateX(calc(50% + 1px));
 }
 
-.left {
+.left.docker-resizer {
     left: 0;
-    transform: translateX(-100%);
+    transform: translateX(calc(-50% - 1px));
 }
 
 .docker-tabs {

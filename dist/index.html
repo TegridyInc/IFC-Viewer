@@ -17,65 +17,34 @@
 </head>
 
 <body>
-    <div id="app-header">
-        <div id="toolbars">
-            <div class="toolbar">
-                <div class="toolbar-container">
-                    <select id="projection" class="control selector">
-                        <option value="perspective">Perspective</option>
-                        <option value="orthographic">Orthographic</option>
-                    </select>
-                    <select id="navigation" class="control selector">
-                        <option value="Orbit">Orbit</option>
-                        <option value="FirstPerson">First Person</option>
-                    </select>
-                </div>
-                <div class="toolbar-name">Camera</div>
-            </div>
-            <div class="toolbar-divider"></div>
-            <div class="toolbar">
-                <div class="toolbar-container">
-                    <i class="small-button unselectable material-symbols-outlined" id="move"
-                        title="Select Model">open_with</i>
-                    <i class="small-button tool-selected unselectable material-symbols-outlined" id="select"
-                        title="Select Object">arrow_selector_tool</i>
-                </div>
-                <div class="toolbar-name">Tool</div>
-            </div>
-            <div class="toolbar-divider"></div>
-            <div class="toolbar">
-                <div class="toolbar-container model-grid">
-                    <i class="small-button unselectable material-symbols-outlined" id="open-model-manager"
-                        title="Model Manager">menu</i>
-                    <label class="small-button unselectable material-symbols-outlined" for="ifc-file-upload"
-                        title="Upload IFC Model">
-                        upload_file
-                        <input type="file" id="ifc-file-upload" accept=".ifc" hidden />
-                    </label>
-                    <i class="small-button unselectable material-symbols-outlined" id="open-properties" title="Properties">data_object</i>
-                </div>
-                <div class="toolbar-name">Model</div>
-            </div>
-            <div class="toolbar-divider"></div>
-            <div class="toolbar">
-                <div class="toolbar-container">
-                    <i class="small-button unselectable material-symbols-outlined" id="culler-threshold" title="Culler Threshold">stacks</i>
-                </div>
-                <div class="toolbar-name">Graphics</div>
-            </div>
-            <div class="toolbar-divider"></div>
-        </div>
-        <i class="unselectable material-symbols-outlined" id="app-header-hider"></i>
-    </div>
     <div id="viewport">
-        <div class="docker">
+       <div id="viewport-label" class="unselectable">IFC Viewer</div>
+        <div id="viewport-controls">
+            <i class="small-button unselectable material-symbols-outlined" id="open-model-manager" title="Model Manager">menu</i>
+            <label class="small-button unselectable material-symbols-outlined" for="ifc-file-upload" title="Upload IFC Model">
+                upload_file <input type="file" id="ifc-file-upload" accept=".ifc" hidden />
+            </label>
+            <i class="small-button tool-selected unselectable material-symbols-outlined" id="select" title="Select Object">arrow_selector_tool</i>
+            <i class="small-button unselectable material-symbols-outlined" id="move" title="Select Model">open_with</i>
+            <i class="small-button unselectable material-symbols-outlined" id="open-properties" title="Properties">data_object</i>
+            <i class="small-button unselectable material-symbols-outlined" id="culler-threshold" title="Culler Threshold">stacks</i>
+            <select id="projection" class="control selector">
+                <option value="perspective">Perspective</option>
+                <option value="orthographic">Orthographic</option>
+            </select>
+            <select id="navigation" class="control selector">
+                <option value="Orbit">Orbit</option>
+                <option value="FirstPerson">First Person</option>
+            </select>
+        </div>
+        <div id="container"></div>
+        <div class="docker right" style="left: calc(100% + 2px);">
             <div class="docker-tabs">
             </div>
             <div class="docker-container"></div>
             <div class="docker-resizer right"></div>
         </div>
-        <div id="container"></div>
-        <div class="docker">
+        <div class="docker left" style="right: calc(100% + 2px);">
             <div class="docker-tabs">
             </div>
             <div class="docker-container"></div>

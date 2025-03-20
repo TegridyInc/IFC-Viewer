@@ -1,12 +1,5 @@
 interface DockerData {
     root: HTMLElement;
-    width: number;
-    height: number;
-    //Top Left of the element
-    position: {
-        x: number,
-        y: number
-    };
     dockerTabs: HTMLElement;
     dockerContainer: HTMLElement;
     selectedTab: TabData;
@@ -33,6 +26,8 @@ const dockerElements = document.getElementsByClassName('docker');
 for (const docker of dockerElements) {
     AddDocker(docker as HTMLElement);
 }
+
+const viewport = document.getElementById('viewport');
 
 export function RegisterWindow(root: HTMLElement) {
     const header = root.getElementsByClassName('window-header').item(0) as HTMLElement;
@@ -140,50 +135,29 @@ function AddDocker(docker: HTMLElement) {
 
     const dockerData: DockerData = {
         root: docker,
-        width: docker.offsetWidth,
-        height: docker.offsetHeight,
-        position: { x: docker.offsetLeft, y: docker.offsetTop },
         dockerTabs: dockerTabs,
         dockerContainer: dockerContainer,
         selectedTab: null,
     };
 
     function ResizeDocker(e: MouseEvent) {
-        const width = docker.clientWidth;
-        dockerData.position.x = docker.offsetLeft
-        dockerData.width = docker.clientWidth
-        docker.style.width = (width + e.movementX * direction) + 'px';
+        docker.style.width = (docker.clientWidth + e.movementX * direction) + 'px';
     }
 
     dockers.push(dockerData)
 }
 
-function RemoveDocker(docker: HTMLElement) {
-    var index = -1;
-
-    for (var i = 0; i < dockers.length; i++) {
-        if (dockers[i].root == docker) {
-            index = i;
-            break;
-        }
-    }
-
-    if (index == -1)
-        return;
-
-    const root = dockers[index].root;
-    dockers.splice(index, 1);
-    root.remove();
-}
-
 function CheckDockers(e: MouseEvent) {
     for (const docker of dockers) {
-        if (e.clientX < docker.position.x || e.clientX > docker.position.x + docker.width) {
+        const offsetLeft = docker.root.offsetLeft + viewport.offsetLeft;
+        const offsetTop = docker.root.offsetTop + viewport.offsetTop - docker.root.offsetHeight / 2;
+
+        if (e.clientX < offsetLeft || e.clientX > offsetLeft + docker.root.offsetWidth) {
             selectedDocker = null;
             continue;
         }
 
-        if (e.clientY < docker.position.y || e.clientY > docker.position.y + docker.height) {
+        if (e.clientY < offsetTop || e.clientY > offsetTop + docker.root.offsetHeight) {
             selectedDocker = null;
             continue;
         }
