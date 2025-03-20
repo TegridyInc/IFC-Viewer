@@ -18,24 +18,21 @@
 
 <body>
     <div id="viewport">
-       <div id="viewport-label" class="unselectable">IFC Viewer</div>
+        <div id="viewport-label" class="unselectable">IFC Viewer</div>
         <div id="viewport-controls">
-            <i class="small-button unselectable material-symbols-outlined" id="open-model-manager" title="Model Manager">menu</i>
-            <label class="small-button unselectable material-symbols-outlined" for="ifc-file-upload" title="Upload IFC Model">
+            <i class="small-button unselectable material-symbols-outlined" id="open-model-manager"
+                title="Model Manager">menu</i>
+            <i class="small-button unselectable material-symbols-outlined" id="open-camera-settings"
+                title="Camera Settings">videocam</i>
+            <label class="small-button unselectable material-symbols-outlined" for="ifc-file-upload"
+                title="Upload IFC Model">
                 upload_file <input type="file" id="ifc-file-upload" accept=".ifc" hidden />
             </label>
-            <i class="small-button tool-selected unselectable material-symbols-outlined" id="select" title="Select Object">arrow_selector_tool</i>
+            <i class="small-button tool-selected unselectable material-symbols-outlined" id="select"
+                title="Select Object">arrow_selector_tool</i>
             <i class="small-button unselectable material-symbols-outlined" id="move" title="Select Model">open_with</i>
-            <i class="small-button unselectable material-symbols-outlined" id="open-properties" title="Properties">data_object</i>
-            <i class="small-button unselectable material-symbols-outlined" id="culler-threshold" title="Culler Threshold">stacks</i>
-            <select id="projection" class="control selector">
-                <option value="perspective">Perspective</option>
-                <option value="orthographic">Orthographic</option>
-            </select>
-            <select id="navigation" class="control selector">
-                <option value="Orbit">Orbit</option>
-                <option value="FirstPerson">First Person</option>
-            </select>
+            <i class="small-button unselectable material-symbols-outlined" id="open-properties"
+                title="Properties">data_object</i>
         </div>
         <div id="container"></div>
         <div class="docker right" style="left: calc(100% + 2px);">
@@ -49,6 +46,58 @@
             </div>
             <div class="docker-container"></div>
             <div class="docker-resizer left"></div>
+        </div>
+    </div>
+    <div class="window" id="camera-settings">
+        <div class="window-header">
+            <div class="window-label unselectable">Camera Settings</div>
+            <i class="window-close material-symbols-outlined unselectable">close</i>
+        </div>
+        <div class="window-container">
+            <div class="section">
+                <div class="section-label">Controls</div>
+                <div class="section-container">
+                    <div class="window-input">
+                        <div class="window-input-label">Projection</div>
+                        <div class="window-input-container">
+                            <select id="projection" class="control selector">
+                                <option value="perspective">Perspective</option>
+                                <option value="orthographic">Orthographic</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="window-input">
+                        <div class="window-input-label">Navigation</div>
+                        <div class="window-input-container">
+                            <select id="navigation" class="control selector">
+                                <option value="Orbit">Orbit</option>
+                                <option value="FirstPerson">First Person</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="section">
+                <div class="section-label">Graphics</div>
+                <div class="section-container">
+                    <div class="window-input">
+                        <div class="window-input-label">Culler Threshold</div>
+                        <div class="window-input-container">
+                            <div class="slider" id="culler-threshold">
+                                <div class="slider-min">0</div>
+                                <div class="slider-rail">
+                                    <div class="slider-nob" style="left: clamp(0%, 0px, 100%);">
+                                        <div class="slider-value">0</div>
+                                    </div>
+                                </div>
+                                <div class="slider-max">50</div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
         </div>
     </div>
     <script src="bundle.js"></script>

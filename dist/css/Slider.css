@@ -3,9 +3,9 @@
     align-items: center;
     background: #171717;
     width: 200px;
-    height: 10px;
+    height: 5px;
     border: 1px solid #0a93c4;
-    border-radius: 5px;
+    border-radius: 2px;
     padding: 8px;
     justify-content: center;
     z-index: 10;
@@ -29,7 +29,7 @@
     background: white;
     position: absolute;
     transform: translateX(-50%);
-    width: 10px;
+    width: 8px;
     aspect-ratio: 1;
     padding: 3px;
     border-radius: 50%;
@@ -50,6 +50,14 @@
     align-items: center;
     display: flex;
     font-size: 10px;
+}
+
+.slider-min {
+    font-size: small;
+}
+
+.slider-max {
+    font-size: small;
 }
 
 .slider-absolute {

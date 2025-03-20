@@ -70,11 +70,18 @@ async function Initialize(): Promise<void> {
         viewport.style.top = `${viewport.offsetTop + e.movementY}px`;
         viewport.style.left = `${viewport.offsetLeft + e.movementX}px`;
     }
-    viewportLabel.addEventListener('mousedown', () =>{
+    viewportLabel.addEventListener('mousedown', () => {
         document.addEventListener('mousemove', MoveViewport);
-        viewportLabel.addEventListener('mouseup', ()=>{
+        viewportLabel.addEventListener('mouseup', () => {
             document.removeEventListener('mousemove', MoveViewport)
-        }, {once: true})
+        }, { once: true })
+    })
+
+    UIUtility.RegisterWindows();
+
+    UIUtility.RegisterSlider(document.getElementById('culler-threshold'), (value) => {
+        Components.culler.config.threshold = value;
+        Components.culler.needsUpdate = true;
     })
 
     selectedModel = null;
