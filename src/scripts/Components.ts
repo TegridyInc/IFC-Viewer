@@ -44,9 +44,15 @@ export function Initialize() {
     grid = grids.create(world);
     caster = casters.get(world);
     
-    clipper.enabled = true;
-    clipper.setup({ color: new THREE.Color(1, 1, 1) })
+    clipper.enabled = false;
+    clipper.setup({ color: new THREE.Color(1, 0, 0), size: 10 })
     
+    document.addEventListener('dblclick', ()=>{
+        if(!clipper.enabled)  
+            return;
+        clipper.create(world);
+    })
+
     culler = cullers.create(world);
     culler.config.threshold = 0;
     culler.needsUpdate = true;

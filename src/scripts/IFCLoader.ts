@@ -30,8 +30,10 @@ export async function LoadIFCModel(arrayBuffer: ArrayBuffer, name: string, focus
     IFCViewer.boundingBoxes.push(boundingBoxData)
 
     model.children.forEach(child => {
-        if(child instanceof FRA.FragmentMesh) 
+        if(child instanceof FRA.FragmentMesh) {
+            Components.world.meshes.add(child)
             Components.culler.add(child)
+        }
     })
 
     if(focus)

@@ -24,39 +24,18 @@ const explode = document.getElementById('explode');
 
 export const moveTool = document.getElementById('move')
 export const selectTool = document.getElementById('select');
+export const clipperTool = document.getElementById('clipper');
 
 export enum Tools {
     Select,
     Move,
+    Clipper
 }
-export var currentTool: Tools;
+export var currentTool = Tools.Select;
+var currentToolElement: HTMLElement;
 
 export function Initialize() {
-    moveTool.addEventListener('click', () => {
-        currentTool = Tools.Move
-        moveTool.classList.add('tool-selected')
-        selectTool.classList.remove('tool-selected')
-        Components.highlighter.clear();
-        Components.highlighter.enabled = false;
-        toolSelection.style.visibility = 'hidden';
-        openToolSelection.innerHTML = moveTool.innerHTML;
-    })
-
-    selectTool.addEventListener('click', () => {
-        currentTool = Tools.Select
-        selectTool.classList.add('tool-selected')
-        moveTool.classList.remove('tool-selected')
-        Components.highlighter.enabled = true;
-        IFCViewer.transformControls.visible = false;
-        IFCViewer.ClearSelection();
-        toolSelection.style.visibility = 'hidden';
-        openToolSelection.innerHTML = selectTool.innerHTML;
-    })
-
-    openToolSelection.onclick = () => {
-        toolSelection.style.visibility = 'visible'
-    }
-    toolSelection.style.visibility = 'hidden';
+    InitializeTools();
 
     document.addEventListener('keydown', (e) => {
         if (e.key == 'f') {
@@ -131,6 +110,64 @@ export function Initialize() {
         Components.culler.needsUpdate = true;
     })
 
+}
+
+function InitializeTools() {
+    currentToolElement = selectTool;
+
+    moveTool.addEventListener('click', () => SelectTool(Tools.Move, moveTool))
+
+    selectTool.addEventListener('click', () => {
+        SelectTool(Tools.Select, selectTool)
+    })
+
+    clipperTool.addEventListener('click', ()=> {
+        SelectTool(Tools.Clipper, clipperTool)
+    })
+
+    openToolSelection.onclick = () => {
+        toolSelection.style.visibility = 'visible'
+    }
+    toolSelection.style.visibility = 'hidden';
+}
+
+function SelectTool(newTool:Tools, toolElement: HTMLElement) {
+    currentToolElement.classList.remove('tool-selected')
+    currentToolElement = toolElement;
+    currentToolElement.classList.add('tool-selected')
+
+    switch(currentTool) {
+        case Tools.Select:
+            Components.highlighter.clear();
+            Components.highlighter.enabled = false;
+            break;
+        case Tools.Move:
+            IFCViewer.transformControls.visible = false;
+            IFCViewer.ClearSelection();
+            break;
+        case Tools.Clipper:
+            Components.clipper.deleteAll();
+            Components.clipper.enabled = false;
+            break;
+    }
+
+    currentTool = newTool;
+
+    switch(currentTool) {
+        case Tools.Select:
+            Components.highlighter.enabled = true;
+            break;
+        case Tools.Move:
+
+            break;
+        case Tools.Clipper:
+            Components.clipper.enabled = true;
+            break;
+    }
+
+    openToolSelection.title = toolElement.title
+    openToolSelection.innerHTML = toolElement.innerHTML;
+    toolSelection.style.visibility = 'hidden'
 }
 
 export async function CreateSpatialStructure(modelID:number) {
