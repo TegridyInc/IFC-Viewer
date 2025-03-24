@@ -110,6 +110,15 @@ html {
     background: var(--highlight-color);
 }
 
+.small-button-selected {
+    color: black;
+    background-color: #f1f1f1;
+
+    &:hover {
+        background: #cdcdcd;
+    }
+}
+
 .color-input {
     aspect-ratio: 1;
     width: unset;

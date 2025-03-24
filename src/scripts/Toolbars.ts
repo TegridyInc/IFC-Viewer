@@ -20,6 +20,8 @@ const openSpatialStructure = document.getElementById('open-spatial-structure')
 const spatialStructure = document.getElementById('spatial-structure')
 const spatialStructureContainer  = spatialStructure.getElementsByClassName('window-container').item(0) as HTMLElement;
 
+const explode = document.getElementById('explode');
+
 export const moveTool = document.getElementById('move')
 export const selectTool = document.getElementById('select');
 
@@ -121,6 +123,14 @@ export function Initialize() {
     openSpatialStructure.addEventListener('click', ()=>{
         spatialStructure.style.visibility = 'visible'
     })
+
+    explode.addEventListener('click', ()=>{
+        const explodeModel = explode.classList.toggle('small-button-selected')
+        Components.exploder.set(explodeModel);
+
+        Components.culler.needsUpdate = true;
+    })
+
 }
 
 export async function CreateSpatialStructure(modelID:number) {

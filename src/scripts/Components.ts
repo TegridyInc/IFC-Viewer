@@ -18,6 +18,8 @@ export const grids = components.get(COM.Grids);
 export const propsManager = components.get(COM.IfcPropertiesManager);
 export const highlighter = components.get(OBF.Highlighter);
 export const indexer = components.get(COM.IfcRelationsIndexer)
+export const exploder = components.get(COM.Exploder);
+export const classifier = components.get(COM.Classifier);
 
 export var grid: COM.SimpleGrid;
 export var caster: COM.SimpleRaycaster;

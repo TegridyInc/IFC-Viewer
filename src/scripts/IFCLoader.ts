@@ -1,3 +1,4 @@
+import * as WEBIFC from 'web-ifc'
 import * as FRA from '@thatopen/fragments';
 import * as Components from './Components';
 import * as IFCUtility from './IFCUtility';
@@ -15,6 +16,12 @@ export async function LoadIFCModel(arrayBuffer: ArrayBuffer, name: string, focus
     const data = new Uint8Array(arrayBuffer);
     const modelID = IFCViewer.webIfc.OpenModel(data);
     const model = await Components.ifcloader.load(data);
+
+    Components.indexer.process(model);
+
+    await Components.classifier.bySpatialStructure(model, {
+        isolate: new Set([WEBIFC.IFCBUILDINGSTOREY]),
+    });
 
     model.userData.modelID = modelID;
     model.name = name;
