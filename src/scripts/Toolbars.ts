@@ -126,6 +126,9 @@ function InitializeTools() {
     })
 
     openToolSelection.onclick = () => {
+        if(openToolSelection.classList.contains('tool-disabled'))
+            return;
+
         toolSelection.style.visibility = 'visible'
     }
     toolSelection.style.visibility = 'hidden';
@@ -136,6 +139,16 @@ function SelectTool(newTool:Tools, toolElement: HTMLElement) {
     currentToolElement = toolElement;
     currentToolElement.classList.add('tool-selected')
 
+    DeactivateTool();
+    currentTool = newTool;
+    ActivateTool();
+    
+    openToolSelection.title = toolElement.title
+    openToolSelection.innerHTML = toolElement.innerHTML;
+    toolSelection.style.visibility = 'hidden'
+}
+
+export function DeactivateTool() {
     switch(currentTool) {
         case Tools.Select:
             Components.highlighter.clear();
@@ -150,9 +163,9 @@ function SelectTool(newTool:Tools, toolElement: HTMLElement) {
             Components.clipper.enabled = false;
             break;
     }
+}
 
-    currentTool = newTool;
-
+export function ActivateTool() {
     switch(currentTool) {
         case Tools.Select:
             Components.highlighter.enabled = true;
@@ -164,10 +177,15 @@ function SelectTool(newTool:Tools, toolElement: HTMLElement) {
             Components.clipper.enabled = true;
             break;
     }
+} 
 
-    openToolSelection.title = toolElement.title
-    openToolSelection.innerHTML = toolElement.innerHTML;
+export function DisableTool() {
     toolSelection.style.visibility = 'hidden'
+    openToolSelection.classList.add('tool-disabled')
+}
+
+export function EnableTool() {
+    openToolSelection.classList.remove('tool-disabled')
 }
 
 export async function CreateSpatialStructure(modelID:number) {

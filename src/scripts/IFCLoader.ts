@@ -6,6 +6,18 @@ import * as IFCViewer from './IFCViewer';
 import * as UIUtility from './UIUtility';
 import * as Toolbars from './Toolbars'
 
+const plans = document.getElementById('plans');
+const plansContainer = plans.getElementsByClassName('window-container').item(0) as HTMLElement;
+const plansClose = plans.getElementsByClassName('window-close').item(0) as HTMLElement;
+
+
+plansClose.addEventListener('click', ()=>{
+    Components.highlighter.clear();
+    Components.highlighter.enabled = false;
+    Toolbars.EnableTool();
+    Components.plans.exitPlanView(true)
+})
+
 export async function LoadIFCModelUsingURL(url : string) : Promise<FRA.FragmentsGroup> {
     const response = await fetch(url);
 
@@ -66,6 +78,24 @@ function AddModelToManager(model: FRA.FragmentsGroup, data:Uint8Array, boundingB
         boundingBoxData.outline.material.color.setHex(parseInt(hex));
     }, 'Bounding Box Color');
 
+    UIUtility.CreateButton('stacks', modelItem, async ()=>{
+        if(plansContainer.parentElement != plans)
+            return;
+
+        plansContainer.innerHTML = ''
+        Components.plans.list = [];
+        await Components.plans.generate(model);
+
+        for(const plan of Components.plans.list) {
+            UIUtility.CreateBigButton(plan.name, plansContainer, ()=>{
+                Components.plans.goTo(plan.id)
+            });
+        }
+
+        Components.highlighter.enabled = true;
+        Toolbars.DisableTool();
+        plans.style.visibility = 'visible';
+    })
     UIUtility.CreateButton('list', modelItem, () =>{
         IFCUtility.CreateTypeFoldouts(model, data, IFCViewer.propertyTreeContainer, model.userData.modelID);
 

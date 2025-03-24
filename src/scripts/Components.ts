@@ -17,6 +17,7 @@ export const casters = components.get(COM.Raycasters);
 export const grids = components.get(COM.Grids);
 export const propsManager = components.get(COM.IfcPropertiesManager);
 export const highlighter = components.get(OBF.Highlighter);
+export const plans = components.get(OBF.Plans);
 export const indexer = components.get(COM.IfcRelationsIndexer)
 export const exploder = components.get(COM.Exploder);
 export const classifier = components.get(COM.Classifier);
@@ -60,6 +61,8 @@ export function Initialize() {
     culler.config.renderDebugFrame = true;
     culler.config.width = 350;
     culler.config.height = 350;
+
+    plans.world = world;
 
     world.renderer.onResize.add(()=>{
         world.camera.updateAspect();

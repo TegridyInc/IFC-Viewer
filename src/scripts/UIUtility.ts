@@ -178,6 +178,14 @@ export function CreateButton(iconName: string, parent: HTMLElement, onClick: (e:
     parent.append(button)
 }
 
+export function CreateBigButton(label:string, parent:HTMLElement, onClick: (e:MouseEvent) => void) {
+    const button = document.createElement('div')
+    button.innerHTML = label;
+    button.classList.add('big-button', 'unselectable')
+    button.onclick = onClick;
+    parent.append(button)
+}
+
 export function CreateColorInput(hex: string, parent: HTMLElement, onValueChanged: (e: InputEvent) => void, tooltip?: string) {
     const colorInput = document.createElement('input')
     colorInput.type = 'color';
