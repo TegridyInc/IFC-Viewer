@@ -213,6 +213,7 @@ async function Initialize(): Promise<void> {
                 transformControls.visible = true;
                 transformControls.position.copy(outline.parent.position);
                 selectedModel = outline.parent;
+                Toolbars.CreateSpatialStructure(selectedModel.userData.modelID);
             }
         })
     }

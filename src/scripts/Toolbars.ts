@@ -16,6 +16,10 @@ const cameraSettings = document.getElementById('camera-settings');
 const toolSelection = document.getElementById('tool-selection') as HTMLElement;
 const openToolSelection = document.getElementById('open-tool-selection') as HTMLElement;
 
+const openSpatialStructure = document.getElementById('open-spatial-structure')
+const spatialStructure = document.getElementById('spatial-structure')
+const spatialStructureContainer  = spatialStructure.getElementsByClassName('window-container').item(0) as HTMLElement;
+
 export const moveTool = document.getElementById('move')
 export const selectTool = document.getElementById('select');
 
@@ -113,4 +117,42 @@ export function Initialize() {
     openCameraSettings.addEventListener('click', () => {
         cameraSettings.style.visibility = 'visible';
     })
+
+    openSpatialStructure.addEventListener('click', ()=>{
+        spatialStructure.style.visibility = 'visible'
+    })
+}
+
+export async function CreateSpatialStructure(modelID:number) {
+    spatialStructureContainer.innerHTML = '';
+    const spatialStructure = await IFCViewer.webIfc.properties.getSpatialStructure(modelID, true);
+    const ifcProject = await IFCViewer.webIfc.properties.getItemProperties(modelID, spatialStructure.expressID);
+
+    const foldout = UIUtility.CreateFoldout(ifcProject.Name.value, spatialStructureContainer)
+    const label = document.createElement('div');
+    label.innerHTML = `(${spatialStructure.type})`;
+    label.style.paddingLeft = '5px'
+    foldout.header.append(label);
+
+    spatialStructure.children.forEach(async child => { 
+        await CreateSpatialStructureElement(child, foldout.container)
+    })
+}
+
+async function CreateSpatialStructureElement(element:any, parent:HTMLElement) {
+    if(element.children.length > 0) {
+        const foldout = UIUtility.CreateFoldout(element.Name ? element.Name.value : '', parent)
+        
+        const label = document.createElement('div');
+        label.innerHTML = `(${element.type})`;
+        if(element.Name.value != '')
+            label.style.paddingLeft = '5px'
+        foldout.header.append(label);
+
+        for (const child of element.children) {
+            CreateSpatialStructureElement(child, foldout.container);
+        }
+    } else {
+        UIUtility.CreateFoldoutElement(element.Name.value + ` (${element.type})`, undefined, parent)
+    }
 }
