@@ -38,7 +38,7 @@ export async function LoadIFCModel(arrayBuffer: ArrayBuffer, name: string, focus
     model.userData.modelID = modelID;
     model.name = name;
 
-    const boundingBoxData = IFCUtility.CreateBoundingBox(model, true);
+    const boundingBoxData = IFCUtility.CreateBoundingBox(model, false);
     IFCViewer.boundingBoxes.push(boundingBoxData)
 
     model.children.forEach(child => {
