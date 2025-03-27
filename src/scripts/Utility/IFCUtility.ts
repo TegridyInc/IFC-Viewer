@@ -1,31 +1,19 @@
-import * as COM from '@thatopen/components';
-import * as OBF from '@thatopen/components-front';
 import * as FRA from '@thatopen/fragments';
 import * as THREE from 'three'
-import * as WEBIFC from 'web-ifc';
-import * as IFCViewer from './IFCViewer'
 import * as UIUtility from './UIUtility';
-import * as Components from './Components'
-
-var ifcAPI:WEBIFC.IfcAPI;
+import * as Components from '../Viewer/Components'
+import * as IFC from '../Viewer/IFCModel'
 
 interface ObjectsData {
     objects: { [attibute: string]: any }[];
     threeObjects: FRA.FragmentMesh[];
-    fragmentIDMap: {[attribute:string]:any};
+    fragmentIDMap: { [attribute: string]: any };
     type: number;
 }
 
-export interface BoundingBoxData {
-    outline:THREE.BoxHelper;
-    boxMesh:THREE.Mesh;
-}
+export function CreateBoundingBox(ifcModel: IFC.IFCModel, offsetModel?: boolean, color?: THREE.ColorRepresentation) {
+    const model = ifcModel.object;
 
-export async function Setup(api: WEBIFC.IfcAPI) {
-    ifcAPI = api;
-}
-
-export function CreateBoundingBox(model:FRA.FragmentsGroup, offsetModel?:boolean, color?:THREE.ColorRepresentation) : BoundingBoxData {
     Components.boundingBoxer.reset();
     Components.boundingBoxer.add(model);
     const box3 = Components.boundingBoxer.get();
@@ -33,29 +21,28 @@ export function CreateBoundingBox(model:FRA.FragmentsGroup, offsetModel?:boolean
     const boxMesh = Components.boundingBoxer.getMesh().clone();
     model.add(boxMesh);
     boxMesh.visible = false;
-    
-    if(offsetModel) {
+
+    if (offsetModel) {
         model.children.forEach(child => {
-            if(child instanceof FRA.FragmentMesh)
+            if (child instanceof FRA.FragmentMesh)
                 child.position.sub(boxMesh.position);
         })
-        
+
         model.position.set(0, (Math.abs(box3.min.y) + box3.max.y) / 2, 0);
         boxMesh.position.setScalar(0);
     }
-    
+
     const outline = new THREE.BoxHelper(boxMesh, color ? color : 0xffffff);
     outline.visible = false;
     model.add(outline)
 
     Components.boundingBoxer.dispose();
-    return {outline, boxMesh: boxMesh};
+    ifcModel.boundingBox = {outline: outline, boxMesh: boxMesh}
 }
 
-export async function CreateProperties(modelID:number, propertyID:number) {
-    const container = IFCViewer.propertiesContainer;
-    
-    const property = await IFCViewer.webIfc.properties.getItemProperties(modelID, propertyID);
+export async function CreateProperties(modelID: number, propertyID: number, container:HTMLElement) {
+
+    const property = await webIFC.properties.getItemProperties(modelID, propertyID);
     const propertyFoldout = UIUtility.CreateFoldout(property.Name.value, container);
 
     await CreateAttributesFoldout(property, propertyFoldout.container, modelID)
@@ -64,26 +51,26 @@ export async function CreateProperties(modelID:number, propertyID:number) {
     await CreateSpatialElementFoldout(property, propertyFoldout.container, modelID)
 }
 
-export async function CreateTypeFoldouts(model: FRA.FragmentsGroup, data: Uint8Array, container: HTMLElement, modelID: number) {
+export async function CreateTypeFoldouts(model: FRA.FragmentsGroup, container: HTMLElement, modelID: number) {
     var objects: ObjectsData[] = [];
 
     container.innerHTML = ''
 
     const highlighter = Components.highlighter;
-    for(const selection in highlighter.selection) {
-        if(selection != 'hover' && selection != 'select') 
+    for (const selection in highlighter.selection) {
+        if (selection != 'hover' && selection != 'select')
             highlighter.remove(selection)
     }
 
     for (const child of model.children) {
-        
+
         if (!(child instanceof FRA.FragmentMesh))
             continue;
 
         const idsIterator = child.fragment.ids.values();
         const id = idsIterator.next();
 
-        const properties = await ifcAPI.properties.getItemProperties(modelID, id.value);
+        const properties = await webIFC.properties.getItemProperties(modelID, id.value);
         const index = objects.find(value => {
             if (value.type == properties.type) {
                 const index = value.objects.find(value => value.expressID == properties.expressID)
@@ -98,19 +85,19 @@ export async function CreateTypeFoldouts(model: FRA.FragmentsGroup, data: Uint8A
         });
 
         if (index == undefined)
-            objects.push({ objects: [properties], threeObjects: [child], fragmentIDMap:null, type: properties.type });
+            objects.push({ objects: [properties], threeObjects: [child], fragmentIDMap: null, type: properties.type });
     }
 
     for (const object of objects) {
-        const name = ifcAPI.GetNameFromTypeCode(object.type);
-        Components.highlighter.add(name, new THREE.Color(1,0,0))
+        const name = webIFC.GetNameFromTypeCode(object.type);
+        Components.highlighter.add(name, new THREE.Color(1, 0, 0))
 
-        var ids:number[] = [];
-        object.threeObjects.forEach(threeObject=> {
+        var ids: number[] = [];
+        object.threeObjects.forEach(threeObject => {
             const fragmentIDS = [...threeObject.fragment.ids];
             ids = ids.concat(fragmentIDS)
-        })   
-      
+        })
+
         object.fragmentIDMap = model.getFragmentMap(ids);
 
         const data = UIUtility.CreateFoldout(name, container, async () => {
@@ -118,24 +105,24 @@ export async function CreateTypeFoldouts(model: FRA.FragmentsGroup, data: Uint8A
         }, async () => {
             data.container.innerHTML = ''
         });
-        
+
         const divider = document.createElement('div');
         divider.style.marginLeft = 'auto'
         data.header.append(divider)
-        UIUtility.CreateColorInput('#ff0000', data.header, (e)=>{
+        UIUtility.CreateColorInput('#ff0000', data.header, (e) => {
             const value = (e.target as HTMLInputElement).value;
             var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(value);
             const rgb = {
-              r: parseInt(result[1], 16) / 255,
-              g: parseInt(result[2], 16) / 255,
-              b: parseInt(result[3], 16) / 255
+                r: parseInt(result[1], 16) / 255,
+                g: parseInt(result[2], 16) / 255,
+                b: parseInt(result[3], 16) / 255
             };
             const color = Components.highlighter.colors.get(name);
-            if(color)
+            if (color)
                 color.set(rgb.r, rgb.g, rgb.b);
         });
-        
-        UIUtility.CreateButton('light_off', data.header, (e)=>{
+
+        UIUtility.CreateButton('light_off', data.header, (e) => {
             const button = e.target as HTMLElement;
             const isHighlighted = button.innerHTML == 'lightbulb';
             button.innerHTML = isHighlighted ? 'light_off' : 'lightbulb';
@@ -143,21 +130,21 @@ export async function CreateTypeFoldouts(model: FRA.FragmentsGroup, data: Uint8A
             Components.highlighter.highlightByID(name, isHighlighted ? {} : object.fragmentIDMap, true)
         });
 
-        UIUtility.CreateButton('visibility', data.header, (e)=>{
+        UIUtility.CreateButton('visibility', data.header, (e) => {
             const button = e.target as HTMLElement;
             const isVisible = button.innerHTML == 'visibility';
             button.innerHTML = isVisible ? 'visibility_off' : 'visibility';
 
-            for(const threeObject of object.threeObjects) {
+            for (const threeObject of object.threeObjects) {
                 const colorMesh = Components.culler.colorMeshes.get(threeObject.uuid);
-                if(!colorMesh) {
+                if (!colorMesh) {
                     threeObject.visible = !isVisible;
                     continue;
                 }
 
-                if(isVisible) 
+                if (isVisible)
                     colorMesh.visible = false;
-                else 
+                else
                     colorMesh.visible = true;
             }
 
@@ -184,11 +171,11 @@ async function CreateModelFoldouts(properties: { [attribute: string]: any }[], c
 async function CreateAttributesFoldout(property: { [attribute: string]: any }, container: HTMLElement, modelID: number) {
     const attributesFoldoutData = UIUtility.CreateFoldout('Attributes', container);
 
-    UIUtility.CreateFoldoutElement('Class', ifcAPI.GetNameFromTypeCode(property.type), attributesFoldoutData.container)
+    UIUtility.CreateFoldoutElement('Class', webIFC.GetNameFromTypeCode(property.type), attributesFoldoutData.container)
 
-    const objectPlacement = await ifcAPI.properties.getItemProperties(modelID, property.ObjectPlacement.value);
-    const relativePlacement = await ifcAPI.properties.getItemProperties(modelID, objectPlacement.RelativePlacement.value)
-    const location = await ifcAPI.properties.getItemProperties(modelID, relativePlacement.Location.value);
+    const objectPlacement = await webIFC.properties.getItemProperties(modelID, property.ObjectPlacement.value);
+    const relativePlacement = await webIFC.properties.getItemProperties(modelID, objectPlacement.RelativePlacement.value)
+    const location = await webIFC.properties.getItemProperties(modelID, relativePlacement.Location.value);
 
     UIUtility.CreateFoldoutElement('Location', "X: " + location.Coordinates['0'].value + " Y: " + location.Coordinates['1'].value + " Z: " + location.Coordinates['2'].value, attributesFoldoutData.container);
 
@@ -197,27 +184,27 @@ async function CreateAttributesFoldout(property: { [attribute: string]: any }, c
 }
 
 async function CreateMaterialFoldout(property: { [attribute: string]: any }, container: HTMLElement, modelID: number) {
-    const materials = await ifcAPI.properties.getMaterialsProperties(modelID, property.expressID);
+    const materials = await webIFC.properties.getMaterialsProperties(modelID, property.expressID);
     materials.forEach(async materialProperty => {
         console.log(materialProperty)
         if (materialProperty.ForLayerSet || materialProperty.MaterialLayers) {
             var layerSet;
-            if(materialProperty.ForLayerSet)
-                layerSet = await ifcAPI.properties.getItemProperties(modelID, materialProperty.ForLayerSet.value);
+            if (materialProperty.ForLayerSet)
+                layerSet = await webIFC.properties.getItemProperties(modelID, materialProperty.ForLayerSet.value);
             else
                 layerSet = materialProperty;
-            
+
             const layerSetContainerData = UIUtility.CreateFoldout('Layers', container);
 
             for (const layerHandle in layerSet.MaterialLayers) {
-                const layer = await ifcAPI.properties.getItemProperties(modelID, layerSet.MaterialLayers[layerHandle].value);
+                const layer = await webIFC.properties.getItemProperties(modelID, layerSet.MaterialLayers[layerHandle].value);
                 const layerContainerData = UIUtility.CreateFoldout('Layer', layerSetContainerData.container)
 
                 if (layer.LayerThickness)
                     UIUtility.CreateFoldoutElement('Layer Thickness', layer.LayerThickness.value, layerContainerData.container)
 
                 if (layer.Material) {
-                    const material = await ifcAPI.properties.getItemProperties(modelID, layer.Material.value);
+                    const material = await webIFC.properties.getItemProperties(modelID, layer.Material.value);
                     UIUtility.CreateFoldoutElement('Material', material.Name.value, layerContainerData.container);
                 } else {
                     UIUtility.CreateFoldoutElement('Material', 'Undefined', layerContainerData.container)
@@ -226,7 +213,7 @@ async function CreateMaterialFoldout(property: { [attribute: string]: any }, con
         } else if (materialProperty.Materials) {
             const materialsContainerData = UIUtility.CreateFoldout('Materials', container)
             for (const materialHandle in materialProperty.Materials) {
-                const material = await ifcAPI.properties.getItemProperties(modelID, materialProperty.Materials[materialHandle].value);
+                const material = await webIFC.properties.getItemProperties(modelID, materialProperty.Materials[materialHandle].value);
                 UIUtility.CreateFoldoutElement(material.Name.value, undefined, materialsContainerData.container);
             }
         }
@@ -236,13 +223,13 @@ async function CreateMaterialFoldout(property: { [attribute: string]: any }, con
 }
 
 async function CreatePropertySetsFoldout(property: { [attribute: string]: any }, container: HTMLElement, modelID: number) {
-    const propertySets = await ifcAPI.properties.getPropertySets(modelID, property.expressID);
+    const propertySets = await webIFC.properties.getPropertySets(modelID, property.expressID);
     if (propertySets.length != 0) {
         const propertySetsContainerData = UIUtility.CreateFoldout('Property Sets', container);
         propertySets.forEach(async propertySet => {
             const propertySetFoldoutData = UIUtility.CreateFoldout(propertySet.Name.value, propertySetsContainerData.container);
             for (const Handle in propertySet.HasProperties) {
-                const singleValue = await ifcAPI.properties.getItemProperties(modelID, propertySet.HasProperties[Handle].value);
+                const singleValue = await webIFC.properties.getItemProperties(modelID, propertySet.HasProperties[Handle].value);
                 if (!singleValue.NominalValue)
                     return;
 
@@ -252,10 +239,10 @@ async function CreatePropertySetsFoldout(property: { [attribute: string]: any },
     }
 }
 
-async function CreateSpatialElementFoldout(property: { [attribute: string]: any }, container: HTMLElement, modelID:number) {
-    const spatialStructure = await ifcAPI.properties.getSpatialStructure(modelID);
+async function CreateSpatialElementFoldout(property: { [attribute: string]: any }, container: HTMLElement, modelID: number) {
+    const spatialStructure = await webIFC.properties.getSpatialStructure(modelID);
     const spatialElementID = GetSpatialElement(spatialStructure, property.expressID);
-    const spatialElement = await ifcAPI.properties.getItemProperties(modelID, spatialElementID);
+    const spatialElement = await webIFC.properties.getItemProperties(modelID, spatialElementID);
 
     if (spatialElement) {
         const spatialElementContainerData = UIUtility.CreateFoldout('Spatial Element', container);

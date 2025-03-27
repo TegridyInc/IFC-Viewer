@@ -1,6 +1,5 @@
 import { clamp, parseInt, round } from 'lodash';
 import * as DockerUtility from './DockerUtility';
-import * as IFCViewer from './IFCViewer'
 
 interface FoldoutData {
     parent: HTMLElement;
@@ -8,45 +7,33 @@ interface FoldoutData {
     container: HTMLElement;
 }
 
-var ModelManagerContainer: HTMLElement;
-
-export function Initialize(modelManagerContainer: HTMLElement) {
-    ModelManagerContainer = modelManagerContainer;
-}
-
-export function RegisterWindows() {
-    const windows = document.getElementsByClassName('window');
-
-    for (const element of windows) {
-        const window = element as HTMLElement;
-
-        const windowHeader = window.getElementsByClassName('window-header').item(0);
-        if (!windowHeader) {
-            console.log(window + ' Does not have a header');
-            continue;
-        }
-
-        const moveWindowFunc = function (e: MouseEvent) {
-            window.style.top = `${window.offsetTop + e.movementY}px`;
-            window.style.left = `${window.offsetLeft + e.movementX}px`;
-        };
-        windowHeader.addEventListener("mousedown", () => {
-            document.addEventListener("mousemove", moveWindowFunc)
-            document.addEventListener("mouseup", () => document.removeEventListener("mousemove", moveWindowFunc), { once: true })
-        })
-
-        const closeWindow = windowHeader.getElementsByClassName('window-close').item(0);
-        if (!closeWindow) {
-            console.error(windowHeader + ' Does not have a close button');
-            continue;
-        }
-
-        closeWindow.addEventListener('click', () => {
-            (window as HTMLElement).style.visibility = 'hidden';
-        })
-
-        DockerUtility.RegisterWindow(window);
+export function RegisterWindow(window: HTMLElement) {
+    const windowHeader = window.getElementsByClassName('window-header').item(0);
+    if (!windowHeader) {
+        console.log(window + ' Does not have a header');
+        return;
     }
+
+    const moveWindowFunc = function (e: MouseEvent) {
+        window.style.top = `${window.offsetTop + e.movementY}px`;
+        window.style.left = `${window.offsetLeft + e.movementX}px`;
+    };
+    windowHeader.addEventListener("mousedown", () => {
+        document.addEventListener("mousemove", moveWindowFunc)
+        document.addEventListener("mouseup", () => document.removeEventListener("mousemove", moveWindowFunc), { once: true })
+    })
+
+    const closeWindow = windowHeader.getElementsByClassName('window-close').item(0);
+    if (!closeWindow) {
+        console.error(windowHeader + ' Does not have a close button');
+        return;
+    }
+
+    closeWindow.addEventListener('click', () => {
+        (window as HTMLElement).style.visibility = 'hidden';
+    })
+
+    DockerUtility.RegisterWindow(window);
 }
 
 export function CreateFoldout(name: string, parent: HTMLElement, onOpen?: () => Promise<void>, onClosed?: () => Promise<void>): FoldoutData {
