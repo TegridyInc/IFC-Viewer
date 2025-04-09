@@ -253,6 +253,7 @@ html {
 #tool-selection {
     width: 32px;
     display: flex;
+    visibility: hidden;
     flex-direction: column;
     align-items: center;
     background: var(--secondary-color);

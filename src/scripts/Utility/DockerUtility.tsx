@@ -1,3 +1,5 @@
+import * as React from 'react';
+
 interface DockerData {
     root: HTMLElement;
     dockerTabs: HTMLElement;
@@ -22,12 +24,39 @@ var dockers: DockerData[] = [];
 var selectedDocker: DockerData;
 var selectedWindow: WindowData;
 
-const dockerElements = document.getElementsByClassName('docker');
-for (const docker of dockerElements) {
-    AddDocker(docker as HTMLElement);
-}
+var viewport: HTMLElement;
 
-const viewport = document.getElementById('viewport');
+export default function Dockers() {
+
+    const mounted = React.useRef(false);
+    React.useEffect(()=>{
+        if(!mounted.current) {
+            mounted.current = true;
+
+            viewport = document.getElementById('viewport')
+
+            const dockerElements = document.getElementsByClassName('docker');
+            for (const docker of dockerElements) {
+                AddDocker(docker as HTMLElement);
+            }
+        }
+    }, [])
+
+    return(
+        <>
+            <div className="docker right" style={{left: 'calc(100% + 2px)'}}>
+                <div className="docker-tabs"></div>
+                <div className="docker-container"></div>
+                <div className="docker-resizer right"></div>
+            </div>
+            <div className="docker left" style={{right: 'calc(100% + 2px)'}} >
+                <div className="docker-tabs"></div>
+                <div className="docker-container"></div>
+                <div className="docker-resizer left"></div>
+            </div>
+        </>
+    )
+}
 
 export function RegisterWindow(root: HTMLElement) {
     const header = root.getElementsByClassName('window-header').item(0) as HTMLElement;
@@ -70,7 +99,7 @@ function DockSelectedWindow() {
 
     dockerTab.addEventListener('dragend', (e) => {
         CheckDockers(e);
-        console.log(selectedDocker)
+        
         if (tabData.currentDocker == selectedDocker)
             return;
 
@@ -165,4 +194,4 @@ function CheckDockers(e: MouseEvent) {
         selectedDocker = docker;
         return;
     }
-};
+}

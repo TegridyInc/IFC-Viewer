@@ -41,7 +41,7 @@ export async function LoadIFCModel(arrayBuffer: ArrayBuffer, name: string, focus
 
     Components.world.scene.three.add(model);
 
-    Toolbars.selectTool.addEventListener('click', () => ifcModel.boundingBox.outline.visible = false)
+    //Toolbars.selectTool.addEventListener('click', () => ifcModel.boundingBox.outline.visible = false)
 
     globalThis.onModelAdded = new CustomEvent<IFC.IFCModel>('onModelAdded', { detail: ifcModel });
     document.dispatchEvent(globalThis.onModelAdded)

@@ -2,6 +2,12 @@ import * as FRA from '@thatopen/fragments'
 import * as Components from '../Viewer/Components'
 import * as IFC from '../Viewer/IFCModel'
 
+document.addEventListener('onViewportLoaded', ()=>{
+    Components.world.camera.controls.addEventListener("sleep", () => {
+        Components.culler.needsUpdate = true;
+    });
+})
+
 document.addEventListener('onModelAdded', (e:CustomEvent)=>{
     const ifcModel = e.detail as IFC.IFCModel;
     const model = ifcModel.object;
@@ -31,9 +37,7 @@ function UpdateCuller(event: {target:IFC.IFCModel}) {
 document.addEventListener('onModelRemoved', (e:CustomEvent)=>{
     const ifcModel = e.detail as IFC.IFCModel;
 
-    console.log(ifcModel)
     ifcModel.object.children.forEach(child=>{
-        console.log(child)
         if(child instanceof FRA.FragmentMesh) {
             Components.culler.remove(child);
         }
@@ -42,6 +46,3 @@ document.addEventListener('onModelRemoved', (e:CustomEvent)=>{
     ifcModel.removeEventListener('onModelMoveEnd', UpdateCuller);
 })
 
-Components.world.camera.controls.addEventListener("sleep", () => {
-    Components.culler.needsUpdate = true;
-});
