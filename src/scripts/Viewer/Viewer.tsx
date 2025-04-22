@@ -4,15 +4,15 @@ import * as WEBIFC from 'web-ifc'
 import { IFCModel } from './IFCModel';
 import * as React from 'react';
 
-import {Container, culler, world } from './Components';
+import {ContainerComponent, culler, world } from './Components';
 
 import ToolBar from './Toolbar'
-import ModelManager from '../Functions/ModelManager';
+import ModelManager from '../Functions/ModelManager.component';
 import PropertyTree from '../Functions/PropertyTree';
 import Properties from '../Functions/Properties'; 
 import SpatialStructure from '../Functions/SpatialStructure'
 import Plans from '../Functions/Plans'
-import Dockers from '../Utility/DockerUtility'
+import Docker from '../Utility/DockerUtility'
 
 import '../Functions/TransformControls'
 import '../Functions/Culler' 
@@ -101,16 +101,16 @@ export default function Viewport() {
                     id="viewport-label" 
                     className='unselectable' 
                     onMouseDown={(e) => { 
-                        const label = e.target as HTMLElement;
                         document.addEventListener('mousemove', MoveViewport);
-                        label.addEventListener('mouseup', ()=>{ 
+                        document.addEventListener('mouseup', ()=>{ 
                             document.removeEventListener('mousemove', MoveViewport)
                         }, {once: true}) 
                     }} 
                     >IFC Viewer
                 </div>
-                <Container></Container>
-                <Dockers></Dockers>
+                <ContainerComponent></ContainerComponent>
+                <Docker isLeftDocker={false}/>
+                <Docker isLeftDocker={true}/>
                 <ToolBar modelManagerRef={modelManagerRef}></ToolBar>
             </div>
             <ModelManager window={modelManagerRef}></ModelManager>
@@ -121,8 +121,3 @@ export default function Viewport() {
         </>
     );
 }
-
-/*
-        
-
-*/

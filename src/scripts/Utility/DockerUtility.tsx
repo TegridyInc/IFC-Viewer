@@ -1,197 +1,225 @@
+import { WindowData } from './UIUtility.component'
+import { styled, Tab, Tabs } from '@mui/material';
 import * as React from 'react';
 
-interface DockerData {
-    root: HTMLElement;
-    dockerTabs: HTMLElement;
-    dockerContainer: HTMLElement;
-    selectedTab: TabData;
-}
+const Docker = styled('div')({
+    display: 'flex',
+    position: 'absolute',
+    flexDirection: 'column',
+    width: '200px',
+    height: 'calc(100% - 20px)',
+    top: '50%',
+    backgroundColor: 'var(--secondary-color)',
+    border: '2px solid var(--accent-color)',
+    transform:'translateY(-50%)'
+})  
 
-interface TabData {
-    tabLabel: HTMLElement;
-    tabContainer: HTMLElement;
-    currentDocker: DockerData;
-}
+const DockerTabs = styled(Tabs)({
+    height: '50px',
+    width: '100%',
+    display: 'flex',
+    alignItems: 'flex-end',
+    boxSizing: 'border-box',
+    overflow: 'hidden',
+    minHeight: 'unset',
 
-interface WindowData {
-    root: HTMLElement;
-    header: HTMLElement;
-    label: HTMLElement;
-    container: HTMLElement;
-}
+    '*.MuiTabs-indicator': {
+        backgroundColor: 'var(--accent-color)'
+    },
 
-var dockers: DockerData[] = [];
-var selectedDocker: DockerData;
-var selectedWindow: WindowData;
+    '*.MuiTabs-scroller': {
+        height: '100%'
+    },
 
-var viewport: HTMLElement;
+    '*.MuiTabs-list': {
+        height: '100%'
+    }
+})
 
-export default function Dockers() {
+const DockerTab = styled(Tab)({
+    fontWeight: 'bold',
+    backgroundColor: '#212121',
+    color: 'var(--highlight-color)',
+    minHeight: 'unset',
+    
+    '&.Mui-selected': {
+        color: 'var(--text-color)',
+        backgroundColor: 'var(--secondary-color)',
+    }
+})
+
+const DockerContainers = styled('div')({
+    height: '100%',
+    width: '100%',
+    overflow: 'hidden'
+})
+
+const DockerContainer = styled('div')({
+    height: '100%',
+
+    '& > *': {
+        resize: 'none',
+        width: '100%',
+        height: '100%',
+    }
+})
+
+const DockerContainerComponent = (props: {windowData: WindowData, isHidden: boolean})=>{    
+    const containerRef = React.useRef<HTMLDivElement>(undefined);
 
     const mounted = React.useRef(false);
     React.useEffect(()=>{
         if(!mounted.current) {
             mounted.current = true;
 
-            viewport = document.getElementById('viewport')
+        }   
+        containerRef.current.appendChild(props.windowData.container);
+    })
 
-            const dockerElements = document.getElementsByClassName('docker');
-            for (const docker of dockerElements) {
-                AddDocker(docker as HTMLElement);
-            }
-        }
-    }, [])
-
-    return(
-        <>
-            <div className="docker right" style={{left: 'calc(100% + 2px)'}}>
-                <div className="docker-tabs"></div>
-                <div className="docker-container"></div>
-                <div className="docker-resizer right"></div>
-            </div>
-            <div className="docker left" style={{right: 'calc(100% + 2px)'}} >
-                <div className="docker-tabs"></div>
-                <div className="docker-container"></div>
-                <div className="docker-resizer left"></div>
-            </div>
-        </>
+    return ( 
+        <DockerContainer ref={containerRef} hidden={props.isHidden}></DockerContainer> 
     )
 }
 
-export function RegisterWindow(root: HTMLElement) {
-    const header = root.getElementsByClassName('window-header').item(0) as HTMLElement;
-    header.addEventListener("mousedown", () => {
-        selectedWindow = {
-            root: root,
-            header: header,
-            label: root.getElementsByClassName('window-label').item(0) as HTMLElement,
-            container: root.getElementsByClassName('window-container').item(0) as HTMLElement
-        };
+const DockerResizer = styled('div')({
+    position: 'absolute',
+    top: 0,
+    height: '100%',
+    width: '6px',
+    cursor: 'w-resize',
+    boxShadow: '1px',
+})
 
-        document.addEventListener("mouseup", (e) => {
-            CheckDockers(e);
-            if (selectedDocker)
-                DockSelectedWindow();
-        }, { once: true })
-    })
-}
+export default function DockerComponent(props: {isLeftDocker: boolean}) {
+    const dockerRef = React.useRef<HTMLDivElement>(undefined)
+    const dockerTabsRef = React.useRef<HTMLDivElement>(undefined)
+    const dockerContainersRef = React.useRef<HTMLDivElement>(undefined)
+    const dockerResizerRef = React.useRef<HTMLDivElement>(undefined)
 
-function DockSelectedWindow() {
-    const docker = selectedDocker;
-    const windowData = selectedWindow;
+    const [tabs, setTabs] = React.useState([])
+    const [containers, setContainers] = React.useState([])
+    const [value, setValue] = React.useState(0);
 
-    const dockerTab = document.createElement('div')
-    const tabData: TabData = { tabLabel: dockerTab, tabContainer: windowData.container, currentDocker: docker }
+    var viewport: HTMLElement;
 
-    dockerTab.draggable = true;
-    dockerTab.addEventListener('click', () => {
-        const selectedTab = tabData.currentDocker.selectedTab;
-        if (selectedTab != null) {
-            selectedTab.tabLabel.classList.remove('docker-tab-selected');
-            selectedTab.tabContainer.style.display = 'none'
-        }
+    const mounted = React.useRef(false)
+    React.useEffect(()=>{
+        if(!mounted.current) {
+            mounted.current = true;
+            viewport = document.getElementById('viewport');
+            const docker = dockerRef.current;
+            const direction = props.isLeftDocker ? -1 : 1;
 
-        tabData.currentDocker.selectedTab = tabData;
+            const resizeDocker = (e: MouseEvent)=> {
+                docker.style.width = (docker.clientWidth + e.movementX * direction)  + 'px';
+            }
 
-        tabData.tabLabel.classList.add('docker-tab-selected');
-        tabData.tabContainer.style.display = 'flex';
-    })
-
-    dockerTab.addEventListener('dragend', (e) => {
-        CheckDockers(e);
+            dockerResizerRef.current.addEventListener('mousedown', () => document.addEventListener('mousemove', resizeDocker))
+            document.addEventListener('mouseup', () => document.removeEventListener('mousemove', resizeDocker))
         
-        if (tabData.currentDocker == selectedDocker)
-            return;
-
-        if (selectedDocker) {
-            AddTabToDocker(tabData);
-        } else {
-            CreateWindowFromTab(tabData, windowData, e);
+            document.addEventListener('onWindowAdded', (e:CustomEvent<WindowData>)=>{
+                const window = e.detail;
+                window.header.addEventListener('mousedown', ()=>{
+                    document.addEventListener('mouseup', (e)=>{
+                        handleWindowMovement(e, window)
+                    }, {once: true})
+                })
+            })
+            
         }
+
+        changeTabs(value)
     })
 
-    dockerTab.innerHTML = selectedWindow.label.innerHTML;
-    dockerTab.classList.add('docker-tab', 'unselectable');
+    const handleWindowMovement = (event: MouseEvent | React.MouseEvent, windowData: WindowData) => {
+        const docker = dockerRef.current;
 
-    docker.dockerTabs.append(dockerTab);
-    if (docker.dockerTabs.children.length != 1) {
-        windowData.container.style.display = 'none';
-    }
-    else {
-        dockerTab.classList.add('docker-tab-selected')
-        docker.selectedTab = { tabLabel: dockerTab, tabContainer: windowData.container, currentDocker: docker }
-    }
+        const offsetLeft = docker.offsetLeft + viewport.offsetLeft;
+        const offsetTop = docker.offsetTop + viewport.offsetTop - docker.offsetHeight / 2;
 
-    windowData.container.classList.add('window-container-docked')
-    docker.dockerContainer.append(windowData.container)
-    selectedWindow.root.style.visibility = 'hidden'
-}
-
-function AddTabToDocker(tab: TabData) {
-    tab.tabLabel.classList.remove('docker-tab-selected')
-    tab.tabContainer.style.display = 'none'
-    if (tab.currentDocker.selectedTab == tab) {
-        tab.currentDocker.selectedTab = null;
-    }
-    tab.currentDocker = selectedDocker;
-
-    selectedDocker.dockerTabs.append(tab.tabLabel);
-    selectedDocker.dockerContainer.append(tab.tabContainer);
-}
-
-function CreateWindowFromTab(tab: TabData, window: WindowData, e: MouseEvent) {
-    tab.tabLabel.remove();
-    tab.tabContainer.style.display = 'flex'
-    tab.tabContainer.classList.remove('window-container-docked')
-
-    window.label.innerHTML = tab.tabLabel.innerHTML;
-    window.root.append(tab.tabContainer)
-    window.root.style.left = e.clientX - window.root.clientWidth / 2 + 'px';
-    window.root.style.top =  e.clientY - window.header.clientHeight / 2 + 'px';
-
-
-    window.root.style.visibility = 'visible';
-}
-
-function AddDocker(docker: HTMLElement) {
-    const dockerTabs = docker.getElementsByClassName('docker-tabs').item(0) as HTMLElement;
-    const dockerContainer = docker.getElementsByClassName('docker-container').item(0) as HTMLElement;
-    const dockerResizer = docker.getElementsByClassName('docker-resizer').item(0) as HTMLElement;
-
-    dockerResizer.addEventListener('mousedown', () => document.addEventListener('mousemove', ResizeDocker))
-    document.addEventListener('mouseup', () => document.removeEventListener('mousemove', ResizeDocker))
-    const direction = dockerResizer.classList.contains('right') ? 1 : -1;
-
-    const dockerData: DockerData = {
-        root: docker,
-        dockerTabs: dockerTabs,
-        dockerContainer: dockerContainer,
-        selectedTab: null,
-    };
-
-    function ResizeDocker(e: MouseEvent) {
-        docker.style.width = (docker.clientWidth + e.movementX * direction) + 'px';
-    }
-
-    dockers.push(dockerData)
-}
-
-function CheckDockers(e: MouseEvent) {
-    for (const docker of dockers) {
-        const offsetLeft = docker.root.offsetLeft + viewport.offsetLeft;
-        const offsetTop = docker.root.offsetTop + viewport.offsetTop - docker.root.offsetHeight / 2;
-
-        if (e.clientX < offsetLeft || e.clientX > offsetLeft + docker.root.offsetWidth) {
-            selectedDocker = null;
-            continue;
+        if (event.clientX < offsetLeft || event.clientX > offsetLeft + docker.offsetWidth) {
+            return;
         }
 
-        if (e.clientY < offsetTop || e.clientY > offsetTop + docker.root.offsetHeight) {
-            selectedDocker = null;
-            continue;
+        if (event.clientY < offsetTop || event.clientY > offsetTop + docker.offsetHeight) {
+            return;
         }
 
-        selectedDocker = docker;
-        return;
+        addWindowToDocker(windowData)
     }
+
+    const addWindowToDocker = (windowData: WindowData) => {
+        const index = dockerContainersRef.current.childElementCount;
+        
+        const tab = (
+            <DockerTab label={windowData.label.innerHTML} draggable onDragEnd={(e)=>{ removeTabFromDocker(windowData, e) }}/>
+        );
+
+        const container = (
+            <DockerContainerComponent windowData={windowData} isHidden={index != 0}></DockerContainerComponent>
+        )
+
+        windowData.root.style.visibility = 'hidden'
+
+        windowData.container.style.width = ''
+        windowData.container.style.height = ''
+
+        setTabs(oldTabs => [...oldTabs, tab])
+        setContainers(oldContainers => [...oldContainers, container])
+
+        console.log('E')
+    }
+
+    const removeTabFromDocker = (windowData: WindowData, mouseEvent: React.MouseEvent)=>{
+        const dockerContainer = windowData.container.parentElement;
+        var index = -1;
+
+        for(let i = 0; i < dockerContainersRef.current.children.length; i++) {
+            if(dockerContainer == dockerContainersRef.current.children.item(i)) {
+                index = i
+                break;
+            }
+        }
+
+        windowData.root.append(windowData.container);
+        windowData.root.style.visibility = 'visible'
+        windowData.root.style.top = `${mouseEvent.clientY - windowData.header.clientHeight / 2}px`;
+        windowData.root.style.left = `${mouseEvent.clientX - windowData.root.clientWidth / 2}px`;
+
+        setContainers(oldContainers => oldContainers.filter((v, i) => i != index))
+        setTabs(oldTabs => oldTabs.filter((v, i) => i != index))
+
+        handleWindowMovement(mouseEvent, windowData)
+    }
+
+    const changeTabs = (value: number) => {
+        setValue(value)
+        const children = dockerContainersRef.current.children;
+        for (let i = 0; i < children.length; i++) {
+            if(i == value) {
+                children.item(i).removeAttribute('hidden');
+            } else {
+                children.item(i).setAttribute('hidden', 'hidden');
+            }
+        }
+    }
+
+    return (
+        <Docker ref={dockerRef} style={props.isLeftDocker ? 
+        {
+            right: 'calc(100% + 2px)',  
+            borderRightWidth: '0px', 
+            borderTopLeftRadius: '5px', 
+            borderBottomLeftRadius: '5px'
+        } : {
+            left: 'calc(100% + 2px)',
+            borderLeftWidth: '0px', 
+            borderTopRightRadius: '5px', 
+            borderBottomRightRadius: '5px'
+        }} >
+            <DockerTabs variant="fullWidth" value={value} onChange={(e,v)=>{changeTabs(v)}} ref={dockerTabsRef}>{tabs}</DockerTabs>
+            <DockerContainers ref={dockerContainersRef}>{containers}</DockerContainers>
+            <DockerResizer ref={dockerResizerRef} style={props.isLeftDocker ? {left: 0, transform: 'translateX(calc(-50% - 1px))'} : {right: 0, transform: 'translateX(calc(50% + 1px))'}}/>
+        </Docker>
+    )
 }

@@ -2,6 +2,7 @@ import * as COM from '@thatopen/components'
 import * as OBF from '@thatopen/components-front'
 import * as THREE from 'three'
 import * as React from 'react';
+import { styled } from '@mui/material';
 
 
 const components = new COM.Components();
@@ -29,7 +30,14 @@ export var culler: COM.MeshCullerRenderer;
 var container: HTMLElement;
 var cameraInput = new THREE.Vector3;
 
-export function Container() {
+const Container = styled('div')({
+    resize: 'both',
+    overflow: 'hidden',
+    minWidth: '200px',
+    minHeight: '200px',
+})
+
+export function ContainerComponent() {
     const mounted = React.useRef(false);
 
     React.useEffect(()=>{
@@ -44,7 +52,7 @@ export function Container() {
         }
     }, [])
 
-    return <div id='container'></div>
+    return <Container id='container'></Container>
 
     function InitializeComponents() {
         components.init();

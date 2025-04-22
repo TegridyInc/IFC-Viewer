@@ -1,7 +1,7 @@
 :root {
     --primary-color: #171717;
     --secondary-color: #2b2b2b;
-    --highlight-color: #3f3f3f;
+    --highlight-color: #4c4c4c;
     --accent-color: #0a93c4;
     --text-color: white;
 }
@@ -20,7 +20,7 @@ html {
 
     ::-webkit-scrollbar {
         background: inherit;
-        width: 12px;
+    
         border-radius: 2px;
     }
 
@@ -52,7 +52,6 @@ html {
 
     border: 2px solid var(--accent-color);
     border-radius: 5px;
-
 }
 
 #viewport-label {
@@ -65,25 +64,6 @@ html {
     font-weight: bold;
 }
 
-#viewport-controls {
-    display: flex;
-    flex-direction: row;
-    position: absolute;
-    bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    border: 2px solid var(--accent-color);
-    border-radius: 5px;
-    background-color: var(--secondary-color);
-}
-
-#container {
-    resize: both;
-    overflow: hidden;
-    min-width: 200px;
-    min-height: 200px;
-}
-
 .unselectable {
     -webkit-touch-callout: none;
     -webkit-user-select: none;
@@ -91,177 +71,4 @@ html {
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
-}
-
-.small-button {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    font-size: 20px;
-    height: 20px;
-    width: 20px;
-    border: 1px solid var(--accent-color);
-    border-radius: 5px;
-    padding: 3px;
-    margin: 2px;
-}
-
-.small-button:hover {
-    background: var(--highlight-color);
-}
-
-.small-button-selected {
-    color: black;
-    background-color: #f1f1f1;
-
-    &:hover {
-        background: #cdcdcd;
-    }
-}
-
-.color-input {
-    aspect-ratio: 1;
-    width: unset;
-    border: 0;
-    background: unset;
-    padding: 0;
-    outline: 0;
-    appearance: none;
-    inline-size: unset;
-
-    border: 1px solid var(--accent-color);
-    padding: 2px;
-    margin: 2px;
-    border-radius: 50%;
-}
-
-.color-input::-webkit-color-swatch-wrapper {
-    padding: 0;
-}
-
-.color-input::-webkit-color-swatch {
-    border-radius: 50%;
-    border: 1px solid white;
-}
-
-.controls {
-    position: absolute;
-    display: none;
-    flex-direction: column;
-    width: 200px;
-    top: 5px;
-    right: 5px;
-    row-gap: 5px;
-    background: black;
-    padding: 5px;
-    border: 1px var(--accent-color) dotted;
-    border-radius: 4px;
-}
-
-.control {
-    display: flex;
-    appearance: none;
-    height: 27px;
-    width: 100%;
-    color: var(--text-color);
-    background: var(--primary-color);
-    border: 1px solid var(--accent-color);
-    border-radius: 3px;
-    padding: 4px 0px;
-    box-sizing: border-box;
-    align-items: center;
-}
-
-.file-input {
-    background-color: black;
-    outline: 0;
-}
-
-.file-input::file-selector-button {
-    color: var(--text-color);
-    font-weight: bold;
-    appearance: none;
-    background-color: var(--primary-color);
-    border: 0;
-    margin-top: -4px;
-    height: calc(100% + 10px);
-}
-
-.selector {
-    padding-left: 6px;
-    margin: 5px 0px 5px 0px;
-    width: 150px;
-}
-
-.selector:focus {
-    outline: 0;
-}
-
-.big-button {
-    width: 100%;
-    border: 1px solid var(--accent-color);
-    border-radius: 5px;
-    padding: 5px;
-    margin: 5px 0px;
-    font-size: small;
-    text-align: center;
-    box-sizing: border-box;
-
-    &:hover {
-        background-color: var(--highlight-color);
-    }
-}
-
-.big-button:hover {
-    background: var(--highlight-color);
-}
-
-.tools {
-    top: 5px;
-    right: 222px;
-    display: flex;
-    position: absolute;
-    background-color: black;
-    border: 1px dotted var(--accent-color);
-    border-radius: 2px;
-}
-
-.tool {
-    width: 30px;
-    margin: 5px;
-    padding: 0px;
-    aspect-ratio: 1/1;
-    background-color: black;
-    color: var(--text-color);
-    border: 1px solid var(--accent-color);
-    border-radius: 3px;
-}
-
-.tool-selected {
-    color: black;
-    background-color: #f1f1f1 !important;
-}
-
-.tool-disabled {
-    color: gray;
-
-    &:hover {
-        background: unset;
-    }
-}
-
-#tool-selection {
-    width: 32px;
-    display: flex;
-    visibility: hidden;
-    flex-direction: column;
-    align-items: center;
-    background: var(--secondary-color);
-    bottom: 33px;
-    position: absolute;
-    border: 1px solid var(--accent-color);
-    z-index: -10;
-
-    border-top-left-radius: 5px;
-    border-top-right-radius: 5px;
 }

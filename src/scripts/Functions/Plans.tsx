@@ -1,13 +1,14 @@
 import * as Components from '../Viewer/Components'
 import * as Toolbar from '../Viewer/Toolbar'
-import {BigButton, Window} from '../Utility/UIUtility'
+import {BigButton, WindowComponent} from '../Utility/UIUtility.component'
 import {IFCModel} from '../Viewer/IFCModel'
+import {Stack} from '@mui/material'
 import * as React from 'react'
 
 var modelOpen: IFCModel;
 
 export default function Plans() {
-    const [plans, setPlans] = React.useState(undefined);
+    const [plans, setPlans] = React.useState([]);
 
     const plansRootRef = React.useRef<HTMLDivElement>(undefined);
     const plansContainerRef = React.useRef<HTMLDivElement>(undefined);
@@ -45,26 +46,30 @@ export default function Plans() {
     
         const planViewButtons = Components.plans.list.map(planView => {
             return (
-                <BigButton label={planView.name} onClick={()=>{
-                    Components.plans.goTo(planView.id)
-                }}></BigButton>
+                <BigButton onClick={()=>{ Components.plans.goTo(planView.id) }}>{planView.name}</BigButton>
             )
         })
 
+        Toolbar.DisableTool();
         Components.highlighter.enabled = true;
         plansRootRef.current.style.visibility = 'visible';
         setPlans(planViewButtons)
     }
 
     return (
-        <Window label='Plans' root={plansRootRef} container={plansContainerRef} onClose={()=>{
+        <WindowComponent label='Plans' root={plansRootRef} container={plansContainerRef} onClose={()=>{
             Components.highlighter.clear();
             Components.highlighter.enabled = false;
-            //Toolbar.EnableTool();
+            Toolbar.EnableTool();
             Components.plans.exitPlanView(true)
         }}>
-            {plans}
-        </Window>
+            { plans.length != 0 ? 
+              <Stack spacing={.5}>
+                {plans}
+              </Stack>
+                : <></>
+            }
+        </WindowComponent>
     )
 }
 

@@ -2,7 +2,8 @@ import * as FRA from '@thatopen/fragments'
 import * as Components from '../Viewer/Components'
 import { ModelFoldouts } from '../Utility/IFCUtility'
 import { IFCModel }  from '../Viewer/IFCModel'
-import { Window } from '../Utility/UIUtility'
+import { Stack } from '@mui/material'
+import { WindowComponent } from '../Utility/UIUtility.component'
 import * as React from 'react'
 
 var ifcModels: IFCModel[] = [];
@@ -15,7 +16,7 @@ export default function Properties() {
     const propertiesRootRef = React.useRef<HTMLDivElement>(undefined);
     const propertiesContainerRef = React.useRef<HTMLDivElement>(undefined);
 
-    const [properties, setProperties] = React.useState(undefined);
+    const [properties, setProperties] = React.useState([]);
 
     const mounted = React.useRef(false);
     React.useEffect(()=>{
@@ -69,7 +70,7 @@ export default function Properties() {
                     const property = await webIFC.properties.getItemProperties(value.ifcModel.id, value.fragmentID);
                     
                     return (
-                        <ModelFoldouts ifcModel={value.ifcModel}  property={property}></ModelFoldouts>
+                        <ModelFoldouts sx={{border: '1px solid var(--highlight-color)'}} ifcModel={value.ifcModel}  property={property}></ModelFoldouts>
                     )
                 }))
 
@@ -83,8 +84,14 @@ export default function Properties() {
     }, [])
 
     return (
-        <Window label='Properties' root={propertiesRootRef} container={propertiesContainerRef}>
-            {properties}
-        </Window>
+        <WindowComponent label='Properties' root={propertiesRootRef} container={propertiesContainerRef}>
+            {
+                properties.length != 0 ?
+                <Stack spacing={.5}>
+                    {properties}
+                </Stack>
+                : <></>
+            }
+        </WindowComponent>
     );
 }

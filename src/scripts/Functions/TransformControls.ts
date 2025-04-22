@@ -90,7 +90,7 @@ document.addEventListener('onViewportLoaded', ()=>{
     container.addEventListener('mouseup', (e) => {
         document.removeEventListener('mousemove', CalculateMouseMoveAmount)
 
-        if (e.button != 0 || mouseMoveAmount != 0)
+        if (e.button != 0 || mouseMoveAmount != 0 || !Toolbar.toolEnabled)
             return;
 
         if (moveToolEnabled) {

@@ -1,8 +1,7 @@
-import * as COM from '@thatopen/components'
 import * as Components from './Components'
 import * as IFCLoader from './IFCLoader'
-import {Button} from '../Utility/UIUtility'
-
+import * as MAT from '@mui/material';
+import {IconButton, ToggleButton} from '../Utility/UIUtility.component'
 import * as React from 'react';
 
 var fileUpload: HTMLInputElement;
@@ -15,18 +14,15 @@ var cameraSettings: HTMLElement;
 var toolSelection: HTMLElement;
 var openToolSelection: HTMLElement;
 
-var explode: HTMLElement;
-
 export enum Tools {
     Select,
     Move,
     Clipper
 }
 
+export var toolEnabled = true;
 var currentTool = Tools.Select;
 var onToolChanged = new CustomEvent('onToolChanged', { detail: currentTool })
-var currentToolElement: HTMLElement;
-
 
 // projection.oninput = () => {
 //     switch (projection.value) {
@@ -59,19 +55,49 @@ var currentToolElement: HTMLElement;
 //     cameraSettings.style.visibility = 'visible';
 // })
 
+const ViewportControls = MAT.styled(MAT.Stack)({
+    display: 'flex',
+    flexDirection: 'row',
+    position: 'absolute',
+    bottom: '10px',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    border: '1px solid var(--highlight-color)',
+    borderRadius: '5px',
+    backgroundColor: 'var(--secondary-color)',
+    padding: '5px',
+})
 
+const Divider = MAT.styled(MAT.Divider)({
+    backgroundColor: '#333333',
+    width: '1px',
+    height: 'auto'
+})
+
+const ToolSelection = MAT.styled(MAT.ToggleButtonGroup)({
+    display: 'flex',
+    visibility: 'hidden',
+    flexDirection: 'row',
+    alignItems: 'center',
+    bottom: '40px',
+    position: 'absolute',
+    zIndex: '-10',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    backgroundColor: 'var(--secondary-color)',
+    border: '1px solid var(--highlight-color)',
+    padding: '2px'
+})
 
 export default function Toolbar(props: { modelManagerRef: React.RefObject<HTMLDivElement> }) {
     const toolSelectionRef = React.useRef<HTMLDivElement>(undefined);
-    const selectToolRef = React.useRef<HTMLDivElement>(undefined);
+
+    const [tool, setTool] = React.useState(0)
 
     const mounted = React.useRef(false)
     React.useEffect(()=>{
         if(!mounted.current) {
             mounted.current = true;
-
-            selectToolRef.current.classList.add('tool-selected');
-            currentToolElement = selectToolRef.current;
 
             fileUpload = document.getElementById('ifc-file-upload') as HTMLInputElement;
             projection = document.getElementById('projection') as HTMLSelectElement;
@@ -82,8 +108,6 @@ export default function Toolbar(props: { modelManagerRef: React.RefObject<HTMLDi
 
             toolSelection = document.getElementById('tool-selection');
             openToolSelection = document.getElementById('open-tool-selection');
-
-            explode = document.getElementById('explode');
 
             fileUpload.addEventListener('input', () => {
                 const file = fileUpload.files[0];
@@ -98,60 +122,64 @@ export default function Toolbar(props: { modelManagerRef: React.RefObject<HTMLDi
         
                 reader.readAsArrayBuffer(file);
             })
-
-            explode.addEventListener('click', () => {
-                const explodeModel = explode.classList.toggle('small-button-selected')
-                Components.exploder.set(explodeModel);
-
-                Components.culler.needsUpdate = true;
-            })
         }
     }, [])
 
+    const [exploded, setExploded] = React.useState(false);
+    const explodeModel = ()=>{
+        setExploded((oldValue)=> !oldValue)
+        Components.exploder.set(!exploded);
+
+        Components.culler.needsUpdate = true;
+    }
+
+    const changeTool = (e: React.MouseEvent<HTMLElement>, v: number) => {
+        if(v == null)
+            return;
+
+        setTool(v)
+        const toolElement = e.target as HTMLElement;
+     
+        if(currentTool == v)
+            return;
+
+        if(toolEnabled)
+            DeactivateTool();
+       
+        currentTool = v;
+        onToolChanged = new CustomEvent('onToolChanged', {detail:v})
+        document.dispatchEvent(onToolChanged)
+    
+        if(toolEnabled)
+            ActivateTool();
+        
+        openToolSelection.innerHTML = toolElement.innerHTML;
+        toolSelection.style.visibility = 'hidden'
+    }
+
     return (
-        <div id='viewport-controls'>
-            <Button icon='menu' onClick={() => { props.modelManagerRef.current.style.visibility = 'visible' }}></Button>
-            <Button icon='videocam'></Button>
-            <label className="small-button unselectable material-symbols-outlined" htmlFor="ifc-file-upload" title="Upload IFC Model">
+        <ViewportControls id='viewport-controls' direction={'row'} spacing={.5} divider={<Divider orientation='vertical'></Divider>}>
+            <IconButton onClick={() => { props.modelManagerRef.current.style.visibility = 'visible' }}>menu</IconButton>
+            <IconButton>videocam</IconButton>
+            <IconButton>
                 upload_file
-                <input type="file" id="ifc-file-upload" accept=".ifc" hidden />
-            </label>
-            <Button id='open-spatial-structure' icon='package_2'></Button>
-            <Button id='explode' icon='explosion'></Button>
-            <div>
-                <Button icon='arrow_selector_tool' id='open-tool-selection' onClick={()=>{ toolSelectionRef.current.style.visibility = 'visible' }}></Button>
-                <div id='tool-selection' ref={toolSelectionRef}>
-                    <Button id='0' icon='arrow_selector_tool' onClick={SelectTool} ref={selectToolRef}></Button>
-                    <Button id='1' icon='open_with' onClick={SelectTool}></Button>
-                    <Button id='2' icon='start' onClick={SelectTool}></Button>
-                </div>
+                <label style={{position: 'absolute', left: 0, top: 0, width: '100%', height: '100%'}}>
+                    <input type="file" id="ifc-file-upload" accept=".ifc" hidden />
+                </label>
+            </IconButton>
+            <IconButton id='open-spatial-structure'>package_2</IconButton>
+            <ToggleButton value={exploded} selected={exploded} id='explode' onClick={explodeModel}>explosion</ToggleButton>
+            <div style={{position: 'relative'}} id='tools'>
+                <IconButton sx={{border: '1px solid rgba(0, 0, 0, 0.12)'}} id='open-tool-selection' onClick={()=>{ toolSelectionRef.current.style.visibility = 'visible' }}>arrow_selector_tool</IconButton>
+                <ToolSelection id='tool-selection' ref={toolSelectionRef} value={tool} exclusive onChange={changeTool}>
+                    <ToggleButton color='primary' size='small' value={0} className='unselectable'>arrow_selector_tool</ToggleButton>
+                    <ToggleButton color='primary' size='small' value={1} className='unselectable'>open_with</ToggleButton>
+                    <ToggleButton color='primary' size='small' value={2} className='unselectable'>start</ToggleButton>
+                </ToolSelection>
             </div>
-            <Button id='open-properties' icon='data_object'></Button>
-        </div>
+            <IconButton id='open-properties'>data_object</IconButton>
+        </ViewportControls>
     );
-}
-
-function SelectTool(event: React.MouseEvent) {
-    const toolElement = event.target as HTMLElement;
-
-    currentToolElement.classList.remove('tool-selected')
-    currentToolElement = toolElement;
-    currentToolElement.classList.add('tool-selected')
-    
-    DeactivateTool();
-    
-    const toolIndex = parseInt(toolElement.id);
-    currentTool = toolIndex;
-    onToolChanged = new CustomEvent('onToolChanged', {detail:toolIndex})
-    document.dispatchEvent(onToolChanged)
-
-    ActivateTool();
-
-    currentToolElement = toolElement;
-
-    openToolSelection.title = toolElement.title
-    openToolSelection.innerHTML = toolElement.innerHTML;
-    toolSelection.style.visibility = 'hidden'
 }
 
 export function DeactivateTool() {
@@ -183,15 +211,16 @@ export function ActivateTool() {
     }
 }
 
-/*
 export function DisableTool() {
-    toolSelection.style.visibility = 'hidden'
-    openToolSelection.classList.add('tool-disabled')
+    DeactivateTool();
+    toolEnabled = false;
 }
 
 export function EnableTool() {
-    openToolSelection.classList.remove('tool-disabled')
+    ActivateTool();
+    toolEnabled = true;
 }
-*/
+
+
 
 
