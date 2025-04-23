@@ -90,6 +90,16 @@ const DockerResizer = styled('div')({
     boxShadow: '1px',
 })
 
+const DockerCloser = styled('div', {target: 'material-symbols-outlined unselectable'})({
+    position: 'absolute',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    fontSize: '30px !important',
+    background: 'var(--secondary-color)',
+    border: '1px solid var(--accent-color)',
+    padding: '5px 0px'
+})
+
 export default function DockerComponent(props: {isLeftDocker: boolean}) {
     const dockerRef = React.useRef<HTMLDivElement>(undefined)
     const dockerTabsRef = React.useRef<HTMLDivElement>(undefined)
@@ -204,6 +214,25 @@ export default function DockerComponent(props: {isLeftDocker: boolean}) {
         }
     }
 
+    const toggleDocker = (e:React.MouseEvent) => {
+        const closer = e.target as HTMLElement;
+        const isRight = closer.innerHTML.endsWith('right')
+
+        closer.innerHTML = isRight ? 'keyboard_arrow_left' : 'keyboard_arrow_right'
+
+        if((isRight && props.isLeftDocker) || (!isRight && !props.isLeftDocker)) {
+            dockerRef.current.style.width = '0px'
+            dockerRef.current.style.border = 'unset'
+            props.isLeftDocker ? closer.style.right = 'calc(100% - 2px)' : closer.style.left = 'calc(100% - 2px)'  
+        } else {
+            props.isLeftDocker ? closer.style.right = '100%' : closer.style.left = '100%'  
+            dockerRef.current.style.width = ''
+            dockerRef.current.style.border = ''
+            
+            props.isLeftDocker ? dockerRef.current.style.borderRightWidth = '0px' : dockerRef.current.style.borderLeftWidth = '0px'
+        }
+    }
+
     return (
         <Docker ref={dockerRef} style={props.isLeftDocker ? 
         {
@@ -220,6 +249,15 @@ export default function DockerComponent(props: {isLeftDocker: boolean}) {
             <DockerTabs variant="fullWidth" value={value} onChange={(e,v)=>{changeTabs(v)}} ref={dockerTabsRef}>{tabs}</DockerTabs>
             <DockerContainers ref={dockerContainersRef}>{containers}</DockerContainers>
             <DockerResizer ref={dockerResizerRef} style={props.isLeftDocker ? {left: 0, transform: 'translateX(calc(-50% - 1px))'} : {right: 0, transform: 'translateX(calc(50% + 1px))'}}/>
+            <DockerCloser onClick={toggleDocker} style={props.isLeftDocker ? {
+                right: '100%',
+                borderTopLeftRadius: '2px',
+                borderBottomLeftRadius: '2px',
+            } : {
+                left: '100%',
+                borderTopRightRadius: '2px',
+                borderBottomRightRadius: '2px',
+            }}>{props.isLeftDocker ? 'keyboard_arrow_right' : 'keyboard_arrow_left'}</DockerCloser>
         </Docker>
     )
 }
