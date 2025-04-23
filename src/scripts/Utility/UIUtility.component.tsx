@@ -27,8 +27,6 @@ export const FoldoutComponent = (props: { name: string, sx?:MAT.SxProps, childre
             props.onOpen();
         else if (props.onClosed)
             props.onClosed();
-
-        console.log(e)
     }
 
     return (

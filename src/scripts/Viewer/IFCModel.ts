@@ -21,4 +21,5 @@ export class IFCModel extends THREE.EventDispatcher<Dispatcher> {
     object: FRA.FragmentsGroup;
     boundingBox: BoundingBoxData;
     id:number;
+    group: THREE.Group;
 }

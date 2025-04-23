@@ -1,9 +1,11 @@
 import * as WEBIFC from 'web-ifc'
 import * as FRA from '@thatopen/fragments';
+import * as THREE from 'three';
 import * as Components from './Components';
 import * as IFCUtility from '../Utility/IFCUtility';
 import * as Toolbars from './Toolbar'
 import * as IFC from './IFCModel'
+
 
 export async function LoadIFCModelUsingURL(url: string): Promise<FRA.FragmentsGroup> {
     const response = await fetch(url);
@@ -11,7 +13,7 @@ export async function LoadIFCModelUsingURL(url: string): Promise<FRA.FragmentsGr
     return await LoadIFCModel(await response.arrayBuffer(), url.split('/').pop().split(".ifc")[0]);
 }
 
-export async function LoadIFCModel(arrayBuffer: ArrayBuffer, name: string, focus?: boolean) {
+export async function LoadIFCModel(arrayBuffer: ArrayBuffer, name: string, focus?: boolean, group?: THREE.Group) {
     const data = new Uint8Array(arrayBuffer);
     const ifcID = webIFC.OpenModel(data);
     const model = await Components.ifcloader.load(data);
@@ -39,7 +41,14 @@ export async function LoadIFCModel(arrayBuffer: ArrayBuffer, name: string, focus
     if (focus)
         Components.world.camera.controls.fitToBox(ifcModel.boundingBox.boxMesh, true, {paddingBottom: 5, paddingTop: 5, paddingLeft: 5, paddingRight: 5});
 
-    Components.world.scene.three.add(model);
+    if(group) {
+        group.add(model);
+        ifcModel.group = group;
+    } else {
+        const group = CreateModelGroup();
+        group.add(model)
+        ifcModel.group = group;
+    }
 
     //Toolbars.selectTool.addEventListener('click', () => ifcModel.boundingBox.outline.visible = false)
 
@@ -47,4 +56,10 @@ export async function LoadIFCModel(arrayBuffer: ArrayBuffer, name: string, focus
     document.dispatchEvent(globalThis.onModelAdded)
 
     return model;
+}
+
+function CreateModelGroup(): THREE.Group {
+    const group = new THREE.Group();
+    Components.world.scene.three.add(group);
+    return group;
 }
