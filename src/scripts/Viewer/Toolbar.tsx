@@ -160,7 +160,7 @@ export default function Toolbar(props: { modelManagerRef: React.RefObject<HTMLDi
     return (
         <ViewportControls id='viewport-controls' direction={'row'} spacing={.5} divider={<Divider orientation='vertical'></Divider>}>
             <IconButton onClick={() => { props.modelManagerRef.current.style.visibility = 'visible' }}>menu</IconButton>
-            <IconButton>videocam</IconButton>
+            <IconButton id='open-settings'>settings</IconButton>
             <IconButton>
                 upload_file
                 <label style={{position: 'absolute', left: 0, top: 0, width: '100%', height: '100%'}}>

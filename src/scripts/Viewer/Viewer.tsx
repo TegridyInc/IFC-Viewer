@@ -13,6 +13,7 @@ import Properties from '../Functions/Properties';
 import SpatialStructure from '../Functions/SpatialStructure'
 import Plans from '../Functions/Plans'
 import Docker from '../Utility/DockerUtility'
+import Settings from '../Utility/Settings'
 
 import '../Functions/TransformControls'
 import '../Functions/Culler' 
@@ -118,6 +119,7 @@ export default function Viewport() {
             <Properties></Properties>
             <SpatialStructure></SpatialStructure>
             <Plans></Plans>
+            <Settings></Settings>
         </>
     );
 }

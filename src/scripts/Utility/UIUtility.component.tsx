@@ -1,4 +1,4 @@
-import { chain, clamp, divide, parseInt, round } from 'lodash';
+import { chain, clamp, divide, fill, parseInt, round } from 'lodash';
 import * as DockerUtility from './DockerUtility';
 import { JSX } from 'react/jsx-runtime';
 import * as React from 'react';
@@ -72,7 +72,6 @@ const FoldoutLabel = MAT.styled('div', {target: 'unselectable'})({
 
 const FoldoutContainer = MAT.styled(MAT.Collapse)({
     height: 0,
-    overflow: 'hidden',
     transition: 'height 0.1s',
     border: '1px solid var(--highlight-color)',
     borderRadius: '5px',
@@ -311,125 +310,75 @@ export const ColorInput = MAT.styled('input')({
     }
 });
 
+export const SelectInput = MAT.styled(MAT.Select)({
+    backgroundColor: 'var(--secondary-color)',
+    color: 'white',
 
-export function CreateSlider(minValue: number, maxValue: number, container: HTMLElement, valueChanged: (value: number) => void, absolute?: boolean): HTMLElement {
-    const slider = document.createElement('div')
-    container.append(slider)
-    slider.classList.add('slider')
+    '.MuiSelect-icon': {
+        fill: 'rgb(255 255 255 / 36%)'
+    },
 
-    if (absolute)
-        slider.classList.add('slider-absolute')
+    '.MuiFilledInput-input': {
+        paddingBottom: '4px',
+        paddingTop: '24px'
+    }
+})
 
-    const min = document.createElement('div')
-    min.innerHTML = minValue.toString();
-    slider.append(min)
+export const SelectLabel = MAT.styled(MAT.InputLabel)({
+    color: '#909090'
+})
 
-    const sliderRail = document.createElement('div')
-    sliderRail.classList.add('slider-rail')
-    slider.append(sliderRail);
+const Slider = MAT.styled(MAT.Slider)({
+    overflow: 'unset',
+    margin: '20px 25px 5px 25px',
+    width: 'auto'
+})
 
-    const sliderNob = document.createElement('div')
-    sliderNob.style.left = 'clamp(0%, 0px, 100%)'
-    sliderNob.classList.add('slider-nob')
-    sliderRail.append(sliderNob)
+const SliderContainer = MAT.styled('div')({
+    display: 'flex',
+    flexDirection: 'column',
+    position: 'relative'
+});
 
-    const sliderValue = document.createElement('div');
-    sliderValue.innerHTML = minValue.toString();
-    sliderValue.classList.add('slider-value')
-    sliderNob.append(sliderValue)
+const SliderLabel = MAT.styled('div')({
+    position: 'absolute',
+    fontSize: '13px',
+    color: 'rgba(255,255,255, .5)',
+    backgroundColor: 'var(--secondary-color)',
+    top: '5px',
+    left: '15px'
+})
 
-    const max = document.createElement('div')
-    max.innerHTML = maxValue.toString();
-    slider.append(max)
+export const SliderComponent = (props: {label:string, defaultValue?:number, min?:number, max?:number, step?: number, onChange?:(event: Event, value: number)=>void})=>{
+    const handleSliderChange = (e: Event, v: number) => {
+        props.onChange(e, v)
+    }
 
-    sliderNob.addEventListener("mousedown", (e) => {
-        e.stopImmediatePropagation();
-        sliderValue.style.visibility = 'visible'
-
-        function MoveNob(e: MouseEvent) {
-            var parsedValue = parseInt(sliderNob.style.left.split(" ")[1]);
-            parsedValue += e.movementX;
-            sliderNob.style.left = `clamp(0%, ${parsedValue}px, 100%)`;
-
-            const normalized = (1 / sliderRail.clientWidth) * parsedValue;
-            var value = (maxValue - minValue) * normalized + minValue;
-
-            value = round(value)
-            value = clamp(value, minValue, maxValue)
-
-            sliderValue.innerHTML = value.toString();
-        }
-
-        document.addEventListener("mousemove", MoveNob);
-        document.addEventListener(
-            "mouseup",
-            (e) => {
-                document.removeEventListener("mousemove", MoveNob);
-                sliderValue.style.visibility = 'hidden'
-
-                var parsedValue = parseInt(sliderNob.style.left.split(" ")[1]);
-
-                parsedValue = parsedValue > sliderRail.clientWidth ? sliderRail.clientWidth : parsedValue < 0 ? 0 : parsedValue;
-                sliderNob.style.left = `clamp(0%, ${parsedValue}px, 100%)`;
-
-                const normalized = (1 / sliderRail.clientWidth) * parsedValue;
-                const value = (maxValue - minValue) * normalized + minValue;
-
-                valueChanged(value);
-            },
-            { once: true }
-        );
-    });
-
-    return slider;
+    return (
+        <SliderContainer>
+            <SliderLabel>{props.label}</SliderLabel>
+            <Slider defaultValue={props.defaultValue} min={props.min} max={props.max} step={props.step} onChange={handleSliderChange} valueLabelDisplay='auto'/>
+        </SliderContainer>
+    )
 }
 
-export function RegisterSlider(slider: HTMLElement, valueChanged: (value: number) => void) {
-    const sliderValue = slider.getElementsByClassName('slider-value').item(0) as HTMLElement;
-    const sliderRail = slider.getElementsByClassName('slider-rail').item(0) as HTMLElement;
-    const sliderNob = slider.getElementsByClassName('slider-nob').item(0) as HTMLElement;
-    const minValue = parseInt(slider.getElementsByClassName('slider-min').item(0).innerHTML)
-    const maxValue = parseInt(slider.getElementsByClassName('slider-max').item(0).innerHTML)
+export const Checkbox = MAT.styled(MAT.Checkbox)({
+    backgroundColor: '#343434',
+    borderRadius: '5px',
+    padding: '5px',
+    height: '20px',
+    width: '20px',
+    boxSizing: 'content-box',
+    border: '1px solid rgba(0,0,0, 0.12)',
+    boxShadow: '1px 1px 3px 0px #202020'
+})
 
-    sliderNob.addEventListener("mousedown", (e) => {
-        e.stopImmediatePropagation();
-        sliderValue.style.visibility = 'visible'
+export const CheckboxLabel = MAT.styled('div')({
+    marginRight: 'auto'
+})
 
-        function MoveNob(e: MouseEvent) {
-            var parsedValue = parseInt(sliderNob.style.left.split(" ")[1]);
-            parsedValue += e.movementX;
-            sliderNob.style.left = `clamp(0%, ${parsedValue}px, 100%)`;
-
-            const normalized = (1 / sliderRail.clientWidth) * parsedValue;
-            var value = (maxValue - minValue) * normalized + minValue;
-
-            value = round(value)
-            value = clamp(value, minValue, maxValue)
-
-            sliderValue.innerHTML = value.toString();
-        }
-
-        document.addEventListener("mousemove", MoveNob);
-        document.addEventListener(
-            "mouseup",
-            (e) => {
-                document.removeEventListener("mousemove", MoveNob);
-                sliderValue.style.visibility = 'hidden'
-
-                var parsedValue = parseInt(sliderNob.style.left.split(" ")[1]);
-
-                parsedValue = parsedValue > sliderRail.clientWidth ? sliderRail.clientWidth : parsedValue < 0 ? 0 : parsedValue;
-                sliderNob.style.left = `clamp(0%, ${parsedValue}px, 100%)`;
-
-                const normalized = (1 / sliderRail.clientWidth) * parsedValue;
-                const value = (maxValue - minValue) * normalized + minValue;
-
-                valueChanged(value);
-            },
-            { once: true }
-        );
-    });
-
-}
-
-
+export const CheckboxContainer = MAT.styled('div')({
+    padding: '8px',
+    display: 'flex',
+    alignItems: 'center'
+})

@@ -9,7 +9,7 @@ const components = new COM.Components();
 export const exporter = components.get(COM.IfcJsonExporter);
 export const ifcloader = components.get(COM.IfcLoader);
 export const worlds = components.get(COM.Worlds);
-export const world = worlds.create<COM.SimpleScene, COM.OrthoPerspectiveCamera, COM.SimpleRenderer>();
+export const world = worlds.create<COM.SimpleScene, COM.OrthoPerspectiveCamera, OBF.PostproductionRenderer>();
 export const fragmentManager = components.get(COM.FragmentsManager);
 export const clipper = components.get(COM.Clipper);
 export const cullers = components.get(COM.Cullers);
@@ -23,6 +23,8 @@ export const indexer = components.get(COM.IfcRelationsIndexer)
 export const exploder = components.get(COM.Exploder);
 export const classifier = components.get(COM.Classifier);
 
+export var postproduction: OBF.Postproduction;
+export var ambientOclussion: any;
 export var grid: COM.SimpleGrid;
 export var caster: COM.SimpleRaycaster;
 export var culler: COM.MeshCullerRenderer;
@@ -58,7 +60,7 @@ export function ContainerComponent() {
         components.init();
     
         world.scene = new COM.SimpleScene(components);
-        world.renderer = new COM.SimpleRenderer(components, container);
+        world.renderer = new OBF.PostproductionRenderer(components, container);
         world.camera = new COM.OrthoPerspectiveCamera(components);
         
         world.scene.setup({ backgroundColor: new THREE.Color(.05, .05, .05) });
@@ -83,6 +85,15 @@ export function ContainerComponent() {
     
         ifcloader.setup();
     
+        postproduction = world.renderer.postproduction;
+        postproduction.enabled = true;
+        postproduction.customEffects.excludedMeshes.push(grid.three);
+        //postproduction.customEffects.glossEnabled = true;
+        postproduction.setPasses({gamma: false});
+        postproduction.setPasses({custom: false});
+        
+        ambientOclussion = postproduction.n8ao.configuration;
+
         document.addEventListener('dblclick', () => {
             if (!clipper.enabled)
                 return;
