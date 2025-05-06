@@ -38,11 +38,6 @@ const SettingsComponent = () => {
         Components.culler.needsUpdate = true
     }
 
-    const toggleAmbientOclussion = (e: React.ChangeEvent<HTMLInputElement>, value: boolean) => {
-       
-    }
-
-
     return (
         <Settings label={'Settings'} root={rootRef}>
             <Stack spacing={.5}>
