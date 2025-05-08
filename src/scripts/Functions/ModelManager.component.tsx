@@ -3,7 +3,7 @@ import * as FRA from '@thatopen/fragments'
 import * as Components from '../Viewer/Components'
 import {IconButton, WindowComponent, ColorInput, ToggleButton, FoldoutComponent} from '../Utility/UIUtility.component';
 import { LoadIFCModel } from '../Viewer/IFCLoader' 
-import {IFCModel} from '../Viewer/IFCModel'
+import {IFCGroup, IFCModel} from '../Viewer/IFCModel'
 import * as React from 'react';
 import { JSX } from 'react/jsx-runtime';
 import { styled, Stack } from '@mui/material'
@@ -36,7 +36,7 @@ const ModelName = styled('div')({
 const ModelManagerComponent = (props: {window: React.RefObject<HTMLDivElement>}) => {
     const [items, setItems] = React.useState<JSX.Element[]>([]);
 
-    const addModelToGroup = (e: React.FormEvent<HTMLInputElement>, group:THREE.Group)=>{
+    const addModelToGroup = (e: React.FormEvent<HTMLInputElement>, group:IFCGroup)=>{
         const file = e.currentTarget.files[0];
             if (!file)
                 return;
@@ -96,9 +96,13 @@ const ModelManagerComponent = (props: {window: React.RefObject<HTMLDivElement>})
     }
 
     const removeModel = (e:CustomEvent<IFCModel>) => {
+        if(e.detail.group.children.length == 3) {
+            e.detail.group.clear();
+            Components.world.scene.three.remove(e.detail.group);
+        } 
+
         setItems((oldItems)=>{
             var index = oldItems.findIndex((v) => v.key == e.detail.group.id.toString())
-            console.log(index)
 
             if(!oldItems[index].props.children.length || oldItems[index].props.children.length == 1) {
                 return oldItems.filter((v, i) => i != index)
@@ -106,6 +110,9 @@ const ModelManagerComponent = (props: {window: React.RefObject<HTMLDivElement>})
                 const children = oldItems[index].props.children;
                 const newChildren = children.filter((v:any) => v.props.ifcModel.id != e.detail.id.toString())
 
+                e.detail.group.remove(e.detail.object);
+                e.detail.group.recaculateBoundingBox();
+                
                 return oldItems.map((v, i) => {
                     if(i != index)
                         return v;
