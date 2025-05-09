@@ -26,17 +26,12 @@ export async function LoadIFCModel(arrayBuffer: ArrayBuffer, name: string, focus
     await Components.classifier.bySpatialStructure(model, {
         isolate: new Set([WEBIFC.IFCBUILDINGSTOREY]),
     });
-
-    IFCUtility.CreateBoundingBox(ifcModel, false);
     
     model.name = name;
     model.children.forEach(child => {
         if (child instanceof FRA.FragmentMesh) 
             Components.world.meshes.add(child)
     })
-
-    if(focus)
-        Components.world.camera.controls.fitToBox(ifcModel.boundingBox.boxMesh, true, {paddingBottom: 5, paddingTop: 5, paddingLeft: 5, paddingRight: 5});
    
     if(!group) 
         group = CreateModelGroup(); 
@@ -46,8 +41,9 @@ export async function LoadIFCModel(arrayBuffer: ArrayBuffer, name: string, focus
     group.add(model)
     group.ifcModels.push(ifcModel)
     group.recaculateBoundingBox();
-
-    //Toolbars.selectTool.addEventListener('click', () => ifcModel.boundingBox.outline.visible = false)
+    
+    if(focus)
+        Components.world.camera.controls.fitToBox(group.boundingBox.boxMesh, true, {paddingBottom: 5, paddingTop: 5, paddingLeft: 5, paddingRight: 5});
 
     globalThis.onModelAdded = new CustomEvent<IFCModel>('onModelAdded', { detail: ifcModel });
     document.dispatchEvent(globalThis.onModelAdded)

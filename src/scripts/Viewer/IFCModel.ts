@@ -23,7 +23,9 @@ export class IFCGroup extends THREE.Group {
     ifcModels: IFCModel[] = [];
 
     recaculateBoundingBox = () => {
+        var isVisible = false;
         if(this.boundingBox) {
+            isVisible = this.boundingBox.outline.visible;
             this.remove(this.boundingBox.boxMesh);
             this.remove(this.boundingBox.outline)
         }
@@ -35,6 +37,9 @@ export class IFCGroup extends THREE.Group {
         var min = new THREE.Vector3(Infinity, Infinity, Infinity);
 
         this.ifcModels.forEach((ifcModel, i) => {    
+            if(!ifcModel.object) {
+                return;
+            }
             boundingBoxer.add(ifcModel.object);
 
             const mesh = boundingBoxer.getMesh();
@@ -64,7 +69,8 @@ export class IFCGroup extends THREE.Group {
 
         const offset = min.clone().add(max).divideScalar(4);
         const boxGeometry = new THREE.BoxGeometry(max.x + -min.x, max.y + -min.y, max.z + -min.z);
-        
+        boxGeometry.computeBoundingBox();
+
         const meshMatrix = new THREE.Matrix4();
         meshMatrix.setPosition(offset);
         
@@ -81,7 +87,7 @@ export class IFCGroup extends THREE.Group {
 
         const outline = new THREE.BoxHelper(outlineMesh, 0xffffff);
         this.add(outline)   
-        outline.visible = false;
+        outline.visible = isVisible;
           
         this.boundingBox = {
             outline: outline,
@@ -92,7 +98,6 @@ export class IFCGroup extends THREE.Group {
 
 export class IFCModel extends THREE.EventDispatcher<Dispatcher> {
     object: FRA.FragmentsGroup;
-    boundingBox: BoundingBoxData;
     id:number;
     group: IFCGroup;
 }

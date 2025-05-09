@@ -59,8 +59,14 @@ const ModelManagerComponent = (props: {window: React.RefObject<HTMLDivElement>})
                     if(i != index)
                         return v;
                     else {
+                        const children = v.props.children as any[];
+                        const index = children.findIndex((v)=> v.props.ifcModel.id == e.detail.id)
+                        
+                        if(index == -1)
+                            children.push( <ModelItemComponent ifcModel={e.detail}></ModelItemComponent> );
+                        
                         const modelGroup = (
-                            <FoldoutComponent sx={{border: '1px solid var(--highlight-color)'}} name={v.props.name} key={v.key} header={
+                            <FoldoutComponent sx={{border: '1px solid var(--highlight-color)'}} name={v.props.name} inputLabel key={v.key} header={
                                 <IconButton>
                                     add
                                     <label style={{position: 'absolute', left: 0, top: 0, width: '100%', height: '100%'}}>
@@ -68,8 +74,7 @@ const ModelManagerComponent = (props: {window: React.RefObject<HTMLDivElement>})
                                     </label>
                                 </IconButton>
                             }>
-                                {oldItems[index].props.children} 
-                                <ModelItemComponent ifcModel={e.detail}></ModelItemComponent>
+                                {children}
                             </FoldoutComponent>
                         )
 
@@ -78,7 +83,7 @@ const ModelManagerComponent = (props: {window: React.RefObject<HTMLDivElement>})
                 })
             } else {
                 const modelGroup = (
-                    <FoldoutComponent sx={{border: '1px solid var(--highlight-color)'}} name='New Group' key={e.detail.group.id} header={
+                    <FoldoutComponent sx={{border: '1px solid var(--highlight-color)'}} name='New Group' inputLabel key={e.detail.group.id} header={
                         <IconButton>
                             add
                             <label style={{position: 'absolute', left: 0, top: 0, width: '100%', height: '100%'}}>
@@ -86,7 +91,7 @@ const ModelManagerComponent = (props: {window: React.RefObject<HTMLDivElement>})
                             </label>
                         </IconButton>
                     }> 
-                        <ModelItemComponent ifcModel={e.detail}></ModelItemComponent>
+                        {[<ModelItemComponent ifcModel={e.detail}></ModelItemComponent>]}
                     </FoldoutComponent>
                 )
 
@@ -101,6 +106,15 @@ const ModelManagerComponent = (props: {window: React.RefObject<HTMLDivElement>})
             Components.world.scene.three.remove(e.detail.group);
         } 
 
+        const index = e.detail.group.ifcModels.findIndex((v)=>v.id == e.detail.id)
+        if(index != -1) {
+            e.detail.group.ifcModels.splice(index, 1)
+        }
+        e.detail.group.remove(e.detail.object);
+        
+        if(e.detail.group.ifcModels.length > 0)
+            e.detail.group.recaculateBoundingBox();
+
         setItems((oldItems)=>{
             var index = oldItems.findIndex((v) => v.key == e.detail.group.id.toString())
 
@@ -109,9 +123,6 @@ const ModelManagerComponent = (props: {window: React.RefObject<HTMLDivElement>})
             } else {
                 const children = oldItems[index].props.children;
                 const newChildren = children.filter((v:any) => v.props.ifcModel.id != e.detail.id.toString())
-
-                e.detail.group.remove(e.detail.object);
-                e.detail.group.recaculateBoundingBox();
                 
                 return oldItems.map((v, i) => {
                     if(i != index)
@@ -166,16 +177,8 @@ export default ModelManagerComponent;
 const ModelItemComponent = (props: {ifcModel: IFCModel})=>{
     const ifcModel = props.ifcModel;
     const model = ifcModel.object;
-    const boundingBox = ifcModel.boundingBox;
 
     const [visible, setVisibilty] = React.useState(true);
-
-    const changeBoundingBoxColor = (e: React.ChangeEvent<HTMLInputElement>)=>{
-        const value = e.target.value;
-        const hex = '0x' + value.split('#')[1]
-
-        boundingBox.outline.material.color.setHex(parseInt(hex));
-    }
 
     const openPropertyTree = ()=> ifcModel.dispatchEvent({type: 'onPropertyTree'}) 
 
@@ -210,7 +213,6 @@ const ModelItemComponent = (props: {ifcModel: IFCModel})=>{
         <ModelItem key={props.ifcModel.id}>
             <ModelName>{ifcModel.object.name}</ModelName>
             <Stack sx={{alignItems: 'center'}} spacing={.5} direction={'row'}>
-                <ColorInput type='color' defaultValue={'#ffffff'} onChange={changeBoundingBoxColor}/>
                 <IconButton onClick={openPlans}>stacks</IconButton>
                 <IconButton onClick={openPropertyTree}>list</IconButton>
                 <ToggleButton size='small' value={visible} selected={visible} color='primary' onChange={toggleVisibility}>visibility</ToggleButton>

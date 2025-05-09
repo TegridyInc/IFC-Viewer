@@ -5,7 +5,6 @@ import * as FBX from 'three/examples/jsm/loaders/FBXLoader';
 import {IFCGroup, IFCModel} from '../Viewer/IFCModel'
 
 const modelGroups = new Set<IFCGroup>([]);
-const models: IFCModel[] = [];
 const fbxLoader = new FBX.FBXLoader();
 
 var selectedGroup: IFCGroup;
@@ -19,8 +18,7 @@ var moveToolEnabled = false;
 
 document.addEventListener('onViewportLoaded', ()=>{
     const container = document.getElementById('container');
-    
-    
+     
     //Transform Controls
     container.addEventListener('mousedown', () => {
         mouseMoveAmount = 0;
@@ -154,22 +152,17 @@ document.addEventListener('onViewportLoaded', ()=>{
 
 document.addEventListener('onModelAdded', (e: CustomEvent<IFCModel>) => {
     const ifcModel = e.detail;
-    models.push(ifcModel)
     modelGroups.add(ifcModel.group)
-
 })
 
 document.addEventListener('onModelRemoved', (e:CustomEvent<IFCModel>)=>{
     const ifcModel = e.detail;
-    // if(selectedModel == ifcModel) {
-    //     transformControls.visible = false;
-    //     selectedModel = null;
-    // }
-
-    const index = models.indexOf(ifcModel)
-
-    if(index != -1) {
-        models.splice(index, 1)
+    const ifcGroup = ifcModel.group;
+    
+    if(ifcGroup.ifcModels.length == 1) {
+        modelGroups.delete(ifcGroup);
+        if(ifcGroup == selectedGroup)
+            ClearSelection();
     }
 })
 
@@ -201,10 +194,9 @@ function ScaleTransformControls() {
 }
 
 function ClearSelection() {
+    if(selectedGroup) 
+        selectedGroup.boundingBox.outline.visible = false;
+
     selectedGroup = null;
     transformControls.visible = false;
-
-    models.forEach(model => {
-        model.boundingBox.outline.visible = false;
-    })
 }
