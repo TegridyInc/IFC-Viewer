@@ -2,12 +2,12 @@ import * as THREE from 'three'
 import * as Toolbar from '../Viewer/Toolbar'
 import * as Components from '../Viewer/Components'
 import * as FBX from 'three/examples/jsm/loaders/FBXLoader';
-import {IFCModel} from '../Viewer/IFCModel'
+import {IFCGroup, IFCModel} from '../Viewer/IFCModel'
 
-const models: IFCModel[] = [];
+const modelGroups = new Set<IFCGroup>([]);
 const fbxLoader = new FBX.FBXLoader();
 
-var selectedModel : IFCModel;
+var selectedGroup: IFCGroup;
 var transformControls: THREE.Group;
 var upControl: THREE.Mesh;
 var leftControl: THREE.Mesh;
@@ -18,14 +18,13 @@ var moveToolEnabled = false;
 
 document.addEventListener('onViewportLoaded', ()=>{
     const container = document.getElementById('container');
-    
-    
+     
     //Transform Controls
     container.addEventListener('mousedown', () => {
         mouseMoveAmount = 0;
         document.addEventListener('mousemove', CalculateMouseMoveAmount)
 
-        if(!selectedModel)
+        if(!selectedGroup)
             return;
 
         const result = Components.caster.castRay([upControl, leftControl, forwardControl]);
@@ -41,7 +40,9 @@ document.addEventListener('onViewportLoaded', ()=>{
         else
             axis.set(0, 0, 1)
 
-        selectedModel.dispatchEvent({type:'onModelMoveStart'})
+        selectedGroup.ifcModels.forEach(ifcModel => {
+            ifcModel.dispatchEvent({type: 'onModelMoveStart'})
+        })
 
         document.addEventListener('mousemove', MoveModel)
 
@@ -49,14 +50,13 @@ document.addEventListener('onViewportLoaded', ()=>{
             Components.world.camera.controls.enabled = true;
             document.removeEventListener('mousemove', MoveModel)
 
-            if (!selectedModel)
+            if (!selectedGroup)
                 return;
 
-            const model = selectedModel.object;
-            model.updateWorldMatrix(false, true);
-
-            selectedModel.dispatchEvent({type: 'onModelMoveEnd'})
-
+            selectedGroup.ifcModels.forEach(ifcModel => {
+                ifcModel.object.updateWorldMatrix(false, true)
+                ifcModel.dispatchEvent({type: 'onModelMoveEnd'})
+            })
         }, { once: true })
 
         function MoveModel(e: MouseEvent) {
@@ -81,8 +81,10 @@ document.addEventListener('onViewportLoaded', ()=>{
             const offset = axis.clone().multiply(new THREE.Vector3(offsetX, offsetY, offsetZ))
             transformControls.position.add(offset)
 
-            selectedModel?.object.position.copy(transformControls.position);
-            selectedModel?.dispatchEvent({type: 'onModelMove'})
+            selectedGroup?.position.copy(transformControls.position);
+            selectedGroup.ifcModels.forEach(ifcModel => {
+                ifcModel?.dispatchEvent({type: 'onModelMove'})
+            })
         }
     })
 
@@ -97,22 +99,29 @@ document.addEventListener('onViewportLoaded', ()=>{
             ClearSelection();
 
             const geometries = [] as THREE.Mesh[]
-            models.forEach(model => {
-                geometries.push(model.boundingBox.boxMesh);
+            modelGroups.forEach(group => {
+                geometries.push(group.boundingBox.boxMesh);
             })
 
             const result = Components.caster.castRay(geometries);
             if (!result)
                 return;
 
-            const ifcModel = models.find(model => model.boundingBox.boxMesh == result.object);
-            const outline = ifcModel.boundingBox.outline;
+            var modelGroup: IFCGroup;
+            modelGroups.forEach(group => {
+                if(group.boundingBox.boxMesh == result.object) {
+                    modelGroup = group;
+                    return;
+                }
+            })
 
+            const outline = modelGroup.boundingBox.outline;
             outline.visible = true;
+
             transformControls.visible = true;
             transformControls.position.copy(outline.parent.position);
-            selectedModel = ifcModel;
-            ifcModel.dispatchEvent({type: 'onModelSelected'})
+            selectedGroup = modelGroup;
+            //ifcModel.dispatchEvent({type: 'onModelSelected'})
         }
     })
 
@@ -143,30 +152,17 @@ document.addEventListener('onViewportLoaded', ()=>{
 
 document.addEventListener('onModelAdded', (e: CustomEvent<IFCModel>) => {
     const ifcModel = e.detail;
-    models.push(ifcModel)
-
-    ifcModel.addEventListener('onVisibilityChanged', e=>{
-        if(!selectedModel)
-            return;
-        
-        if (selectedModel.object == ifcModel.object && !ifcModel.object.visible)
-            transformControls.visible = false;
-        else if (selectedModel.object == ifcModel.object)
-            transformControls.visible = true;
-    })
+    modelGroups.add(ifcModel.group)
 })
 
 document.addEventListener('onModelRemoved', (e:CustomEvent<IFCModel>)=>{
     const ifcModel = e.detail;
-    if(selectedModel == ifcModel) {
-        transformControls.visible = false;
-        selectedModel = null;
-    }
-
-    const index = models.indexOf(ifcModel)
-
-    if(index != -1) {
-        models.splice(index, 1)
+    const ifcGroup = ifcModel.group;
+    
+    if(ifcGroup.ifcModels.length == 1) {
+        modelGroups.delete(ifcGroup);
+        if(ifcGroup == selectedGroup)
+            ClearSelection();
     }
 })
 
@@ -198,10 +194,9 @@ function ScaleTransformControls() {
 }
 
 function ClearSelection() {
-    selectedModel = null;
-    transformControls.visible = false;
+    if(selectedGroup) 
+        selectedGroup.boundingBox.outline.visible = false;
 
-    models.forEach(model => {
-        model.boundingBox.outline.visible = false;
-    })
+    selectedGroup = null;
+    transformControls.visible = false;
 }

@@ -7,7 +7,7 @@ import { EventDispatcher, Event } from 'three';
 
 //#region Foldout
 
-export const FoldoutComponent = (props: { name: string, sx?:MAT.SxProps, children?:JSX.Element[] | JSX.Element, header?:JSX.Element, onOpen?: () => Promise<void>, onClosed?: () => Promise<void> }) => {
+export const FoldoutComponent = (props: { name: string, inputLabel?: boolean, sx?:MAT.SxProps, children?:JSX.Element[] | JSX.Element, header?:JSX.Element, onOpen?: () => Promise<void>, onClosed?: () => Promise<void> }) => {
     const [expanded, setExpansion] = React.useState(false);
    
     const foldoutExpand = React.useRef(undefined)
@@ -27,14 +27,14 @@ export const FoldoutComponent = (props: { name: string, sx?:MAT.SxProps, childre
             props.onOpen();
         else if (props.onClosed)
             props.onClosed();
-
-        console.log(e)
     }
 
     return (
         <Foldout sx={props.sx}>
             <FoldoutHeader ref={foldoutHeader} onClick={handleExpansion}>
-                <FoldoutLabel>{props.name}</FoldoutLabel>
+                {
+                    props.inputLabel ? <FoldoutLabelInput color='primary' defaultValue={props.name} variant='standard'/> : <FoldoutLabel>{props.name}</FoldoutLabel>
+                }
                 {props.header}
                 <FoldoutExpand ref={foldoutExpand}>keyboard_arrow_up</FoldoutExpand>
             </FoldoutHeader>
@@ -68,6 +68,18 @@ const FoldoutLabel = MAT.styled('div', {target: 'unselectable'})({
     pointerEvents: 'none',
     fontWeight: '300',
     overflow: 'hidden'
+})
+
+const FoldoutLabelInput = MAT.styled(MAT.TextField)({
+    paddingLeft: '5px',
+    marginRight: 'auto',
+    fontWeight: '300',
+    overflow: 'hidden',
+    color: 'white',
+
+    '*': {
+        color: 'white !important'
+    }
 })
 
 const FoldoutContainer = MAT.styled(MAT.Collapse)({

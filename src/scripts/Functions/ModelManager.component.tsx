@@ -1,11 +1,13 @@
 import * as FRA from '@thatopen/fragments'
 
 import * as Components from '../Viewer/Components'
-import {IconButton, WindowComponent, ColorInput, ToggleButton} from '../Utility/UIUtility.component';
-import {IFCModel} from '../Viewer/IFCModel'
+import {IconButton, WindowComponent, ColorInput, ToggleButton, FoldoutComponent} from '../Utility/UIUtility.component';
+import { LoadIFCModel } from '../Viewer/IFCLoader' 
+import {IFCGroup, IFCModel} from '../Viewer/IFCModel'
 import * as React from 'react';
 import { JSX } from 'react/jsx-runtime';
 import { styled, Stack } from '@mui/material'
+import * as THREE from 'three';
 
 const ModelManager = styled(WindowComponent)({
     alignContent: 'center',
@@ -20,7 +22,6 @@ const ModelItem = styled('div')({
     padding: '5px',
     backgroundColor: 'var(--secondary-color)',
     borderRadius: '5px',
-    border: '1px solid var(--highlight-color)'
 })
 
 const ModelName = styled('div')({
@@ -35,19 +36,125 @@ const ModelName = styled('div')({
 const ModelManagerComponent = (props: {window: React.RefObject<HTMLDivElement>}) => {
     const [items, setItems] = React.useState<JSX.Element[]>([]);
 
+    const addModelToGroup = (e: React.FormEvent<HTMLInputElement>, group:IFCGroup)=>{
+        const file = e.currentTarget.files[0];
+            if (!file)
+                return;
+    
+            const reader = new FileReader();
+            reader.onload = () => {
+                const data = new Uint8Array(reader.result as ArrayBuffer);
+                LoadIFCModel(data, file.name.split(".ifc")[0], false, group);
+            }
+    
+            reader.readAsArrayBuffer(file);
+    }
+
+    const addModel = (e:CustomEvent<IFCModel>) => {
+        setItems((oldItems)=>{
+            var index = oldItems.findIndex((v) => v.key == e.detail.group.id.toString())
+
+            if(index != -1) {                    
+                return oldItems.map((v, i) =>{
+                    if(i != index)
+                        return v;
+                    else {
+                        const children = v.props.children as any[];
+                        const index = children.findIndex((v)=> v.props.ifcModel.id == e.detail.id)
+                        
+                        if(index == -1)
+                            children.push( <ModelItemComponent ifcModel={e.detail}></ModelItemComponent> );
+                        
+                        const modelGroup = (
+                            <FoldoutComponent sx={{border: '1px solid var(--highlight-color)'}} name={v.props.name} inputLabel key={v.key} header={
+                                <IconButton>
+                                    add
+                                    <label style={{position: 'absolute', left: 0, top: 0, width: '100%', height: '100%'}}>
+                                        <input type="file" onChange={(event)=>{addModelToGroup(event, e.detail.group)}} accept=".ifc" hidden />
+                                    </label>
+                                </IconButton>
+                            }>
+                                {children}
+                            </FoldoutComponent>
+                        )
+
+                        return modelGroup
+                    }
+                })
+            } else {
+                const modelGroup = (
+                    <FoldoutComponent sx={{border: '1px solid var(--highlight-color)'}} name='New Group' inputLabel key={e.detail.group.id} header={
+                        <IconButton>
+                            add
+                            <label style={{position: 'absolute', left: 0, top: 0, width: '100%', height: '100%'}}>
+                                <input type="file" onChange={(event)=>{addModelToGroup(event, e.detail.group)}} accept=".ifc" hidden />
+                            </label>
+                        </IconButton>
+                    }> 
+                        {[<ModelItemComponent ifcModel={e.detail}></ModelItemComponent>]}
+                    </FoldoutComponent>
+                )
+
+                return [...oldItems, modelGroup]
+            }
+        })
+    }
+
+    const removeModel = (e:CustomEvent<IFCModel>) => {
+        if(e.detail.group.children.length == 3) {
+            e.detail.group.clear();
+            Components.world.scene.three.remove(e.detail.group);
+        } 
+
+        const index = e.detail.group.ifcModels.findIndex((v)=>v.id == e.detail.id)
+        if(index != -1) {
+            e.detail.group.ifcModels.splice(index, 1)
+        }
+        e.detail.group.remove(e.detail.object);
+        
+        if(e.detail.group.ifcModels.length > 0)
+            e.detail.group.recaculateBoundingBox();
+
+        setItems((oldItems)=>{
+            var index = oldItems.findIndex((v) => v.key == e.detail.group.id.toString())
+
+            if(!oldItems[index].props.children.length || oldItems[index].props.children.length == 1) {
+                return oldItems.filter((v, i) => i != index)
+            } else {
+                const children = oldItems[index].props.children;
+                const newChildren = children.filter((v:any) => v.props.ifcModel.id != e.detail.id.toString())
+                
+                return oldItems.map((v, i) => {
+                    if(i != index)
+                        return v;
+                    else {
+                        const modelGroup = (
+                            <FoldoutComponent sx={{border: '1px solid var(--highlight-color)'}} name={v.props.name} key={v.key} header={
+                                <IconButton>
+                                    add
+                                    <label style={{position: 'absolute', left: 0, top: 0, width: '100%', height: '100%'}}>
+                                        <input type="file" onChange={(event)=>{addModelToGroup(event, e.detail.group)}} accept=".ifc" hidden />
+                                    </label>
+                                </IconButton>
+                            }> 
+                                {newChildren}
+                            </FoldoutComponent>
+                        )
+
+                        return modelGroup;
+                    }
+                })
+            }
+        })
+    }
+
     const mounted = React.useRef(false);
     React.useEffect(()=>{
         if(!mounted.current) {
             mounted.current = true;
-            document.addEventListener('onModelAdded', (e:CustomEvent<IFCModel>) => {
-                setItems((oldItems)=>[...oldItems, <ModelItemComponent ifcModel={e.detail}></ModelItemComponent>])
-            })
+            document.addEventListener('onModelAdded', addModel)
 
-            document.addEventListener('onModelRemoved', (e:CustomEvent<IFCModel>) =>{
-                setItems((oldItems)=>oldItems.filter(value => {
-                    return value.props.ifcModel.id != e.detail.id;
-                }))
-            })
+            document.addEventListener('onModelRemoved', removeModel)
         }
     }, [])
     
@@ -66,19 +173,12 @@ const ModelManagerComponent = (props: {window: React.RefObject<HTMLDivElement>})
 
 export default ModelManagerComponent;
 
+
 const ModelItemComponent = (props: {ifcModel: IFCModel})=>{
     const ifcModel = props.ifcModel;
     const model = ifcModel.object;
-    const boundingBox = ifcModel.boundingBox;
 
     const [visible, setVisibilty] = React.useState(true);
-
-    const changeBoundingBoxColor = (e: React.ChangeEvent<HTMLInputElement>)=>{
-        const value = e.target.value;
-        const hex = '0x' + value.split('#')[1]
-
-        boundingBox.outline.material.color.setHex(parseInt(hex));
-    }
 
     const openPropertyTree = ()=> ifcModel.dispatchEvent({type: 'onPropertyTree'}) 
 
@@ -113,7 +213,6 @@ const ModelItemComponent = (props: {ifcModel: IFCModel})=>{
         <ModelItem key={props.ifcModel.id}>
             <ModelName>{ifcModel.object.name}</ModelName>
             <Stack sx={{alignItems: 'center'}} spacing={.5} direction={'row'}>
-                <ColorInput type='color' defaultValue={'#ffffff'} onChange={changeBoundingBoxColor}/>
                 <IconButton onClick={openPlans}>stacks</IconButton>
                 <IconButton onClick={openPropertyTree}>list</IconButton>
                 <ToggleButton size='small' value={visible} selected={visible} color='primary' onChange={toggleVisibility}>visibility</ToggleButton>
