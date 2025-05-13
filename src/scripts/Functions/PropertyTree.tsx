@@ -4,7 +4,7 @@ import {highlighter, culler} from '../Viewer/Components'
 import * as THREE from 'three'
 import { WindowComponent, FoldoutComponent, FoldoutElementComponent, IconButton, ToggleButton, ColorInput } from '../Utility/UIUtility.component'
 import { ModelFoldouts } from '../Utility/IFCUtility'
-import {IFCModel} from '../Viewer/IFCModel'
+import {IFCDispatcher, IFCModel} from '../Viewer/IFC'
 import { Stack } from '@mui/material'
 /*
 */
@@ -29,13 +29,13 @@ export default function PropertyTree() {
             mounted.current = true;
             
             document.addEventListener('onModelAdded', (e: CustomEvent<IFCModel>) => {
-                e.detail.addEventListener('onPropertyTree', OpenPropertyTree)
+                e.detail.dispatcher.addEventListener('onPropertyTree', OpenPropertyTree)
             })
 
             document.addEventListener('onModelRemoved', (e: CustomEvent<IFCModel>) =>{
                 setIFCModel(oldIFCModel => oldIFCModel == e.detail ? undefined : oldIFCModel)
                     
-                e.detail.removeEventListener('onPropertyTree', OpenPropertyTree)
+                e.detail.dispatcher.removeEventListener('onPropertyTree', OpenPropertyTree)
             })
         }
     }, []);
@@ -46,12 +46,12 @@ export default function PropertyTree() {
         </WindowComponent>
     )
 
-    function OpenPropertyTree(event: { target: IFCModel}) {
-        if(ifcModel == event.target) {
+    function OpenPropertyTree(event: { target: IFCDispatcher}) {
+        if(ifcModel == event.target.ifc) {
             return;
         }
     
-        setIFCModel(event.target)
+        setIFCModel(event.target.ifc)
 
         if(propertyTreeContainer.current.parentElement == propertyTreeRoot.current) {
             propertyTreeRoot.current.style.visibility = 'visible';
@@ -69,7 +69,7 @@ function TypeFoldouts(props: { ifcModel: IFCModel }) {
             mounted.current = true;
             
             document.addEventListener('onModelAdded', (e: CustomEvent<IFCModel>) => {
-                e.detail.addEventListener('onPropertyTree', UpdateItems)
+                e.detail.dispatcher.addEventListener('onPropertyTree', UpdateItems)
             })
         }
     }, []);
@@ -77,7 +77,7 @@ function TypeFoldouts(props: { ifcModel: IFCModel }) {
     if (!props.ifcModel)
         return <></>;
 
-    async function UpdateItems(event: { target: IFCModel}) {
+    async function UpdateItems(event: { target: IFCDispatcher}) {
         for (const selection in highlighter.selection) {
             if (selection != 'hover' && selection != 'select')
                 highlighter.remove(selection)
@@ -85,13 +85,12 @@ function TypeFoldouts(props: { ifcModel: IFCModel }) {
     
         setItems([])
 
-        const ifcModel = event.target;
-        const model = ifcModel.object;
+        const ifcModel = event.target.ifc;
 
         var types: TypeData[] = [];
         var idsFound = new Set<number>();
 
-        for (const child of model.children) {
+        for (const child of ifcModel.children) {
             if (!(child instanceof FRA.FragmentMesh))
                 continue;
             
@@ -106,8 +105,7 @@ function TypeFoldouts(props: { ifcModel: IFCModel }) {
             })
 
             for (const id of ids) {
-                const properties = await webIFC.properties.getItemProperties(ifcModel.id, id);
-    
+                const properties = await webIFC.properties.getItemProperties(ifcModel.ifcID, id);
                 const index = types.findIndex(value => value.type == properties.type)
     
                 if(index == -1) {
@@ -126,7 +124,7 @@ function TypeFoldouts(props: { ifcModel: IFCModel }) {
                 fragmentIds.push(...ids)
             })
 
-            type.fragmentIDMap = model.getFragmentMap(fragmentIds)
+            type.fragmentIDMap = ifcModel.getFragmentMap(fragmentIds)
         })
 
         setItems(types.map(value => {

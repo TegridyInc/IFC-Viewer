@@ -1,7 +1,7 @@
 import * as Stats from 'stats.js';
 import * as WEBIFC from 'web-ifc'
 
-import { IFCModel } from './IFCModel';
+import { IFCModel } from './IFC';
 import * as React from 'react';
 
 import {ContainerComponent, culler, world } from './Components';

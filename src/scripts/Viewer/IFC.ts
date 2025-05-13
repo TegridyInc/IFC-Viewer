@@ -1,17 +1,6 @@
 import * as THREE from 'three'
-import * as FRA from '@thatopen/fragments'
+import {FragmentMesh, FragmentsGroup} from '@thatopen/fragments'
 import {boundingBoxer} from './Components'
-
-interface Dispatcher {
-    onVisibilityChanged:{ isVisible: boolean }
-    onPlans: {}
-    onPropertyTree:{}
-    
-    onModelMoveStart:{}
-    onModelMove:{}
-    onModelMoveEnd:{}
-    onModelSelected:{}
-}
 
 export interface BoundingBoxData {
     outline: THREE.BoxHelper;
@@ -37,15 +26,12 @@ export class IFCGroup extends THREE.Group {
         var min = new THREE.Vector3(Infinity, Infinity, Infinity);
 
         this.ifcModels.forEach((ifcModel, i) => {    
-            if(!ifcModel.object) {
-                return;
-            }
-            boundingBoxer.add(ifcModel.object);
+            boundingBoxer.add(ifcModel);
 
             const mesh = boundingBoxer.getMesh();
             const box3 = boundingBoxer.get();
             
-            const offset = ifcModel.object.position.clone().multiplyScalar(2);
+            const offset = ifcModel.position.clone().multiplyScalar(2);
             if(i != this.ifcModels.length - 1) {
                 box3.min.sub(this.position);
                 box3.max.sub(this.position)
@@ -96,8 +82,21 @@ export class IFCGroup extends THREE.Group {
     }
 }
 
-export class IFCModel extends THREE.EventDispatcher<Dispatcher> {
-    object: FRA.FragmentsGroup;
-    id:number;
+export class IFCDispatcher extends THREE.EventDispatcher<IFCModel> { 
+    ifc: IFCModel;
+}
+
+export class IFCModel extends FragmentsGroup {
+    onVisibilityChanged:{ isVisible: boolean }
+    onPlans: {}
+    onPropertyTree:{}
+    
+    onModelMoveStart:{}
+    onModelMove:{}
+    onModelMoveEnd:{}
+    onModelSelected:{}
+
+    dispatcher: IFCDispatcher;
+    ifcID: number;
     group: IFCGroup;
 }

@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import * as Toolbar from '../Viewer/Toolbar'
 import * as Components from '../Viewer/Components'
 import * as FBX from 'three/examples/jsm/loaders/FBXLoader';
-import {IFCGroup, IFCModel} from '../Viewer/IFCModel'
+import {IFCGroup, IFCModel} from '../Viewer/IFC'
 
 const modelGroups = new Set<IFCGroup>([]);
 const fbxLoader = new FBX.FBXLoader();
@@ -41,7 +41,7 @@ document.addEventListener('onViewportLoaded', ()=>{
             axis.set(0, 0, 1)
 
         selectedGroup.ifcModels.forEach(ifcModel => {
-            ifcModel.dispatchEvent({type: 'onModelMoveStart'})
+            ifcModel.dispatcher.dispatchEvent({type: 'onModelMoveStart'})
         })
 
         document.addEventListener('mousemove', MoveModel)
@@ -54,8 +54,8 @@ document.addEventListener('onViewportLoaded', ()=>{
                 return;
 
             selectedGroup.ifcModels.forEach(ifcModel => {
-                ifcModel.object.updateWorldMatrix(false, true)
-                ifcModel.dispatchEvent({type: 'onModelMoveEnd'})
+                ifcModel.updateWorldMatrix(false, true)
+                ifcModel.dispatcher.dispatchEvent({type: 'onModelMoveEnd'})
             })
         }, { once: true })
 
@@ -83,7 +83,7 @@ document.addEventListener('onViewportLoaded', ()=>{
 
             selectedGroup?.position.copy(transformControls.position);
             selectedGroup.ifcModels.forEach(ifcModel => {
-                ifcModel?.dispatchEvent({type: 'onModelMove'})
+                ifcModel?.dispatcher.dispatchEvent({type: 'onModelMove'})
             })
         }
     })

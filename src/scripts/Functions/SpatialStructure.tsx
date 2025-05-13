@@ -1,6 +1,7 @@
 import * as React from 'react';
+import * as THREE from 'three';
 import {FoldoutComponent, WindowComponent, FoldoutElementComponent} from '../Utility/UIUtility.component'
-import { IFCModel } from '../Viewer/IFCModel'
+import {IFCDispatcher, IFCModel } from '../Viewer/IFC'
 
 var openModel: IFCModel;
 
@@ -22,14 +23,13 @@ export default function SpatialStructure() {
             })
             
 
-            document.addEventListener('onModelAdded', (e:CustomEvent)=>{
-                const ifcModel = e.detail as IFCModel;
-                ifcModel.addEventListener('onModelSelected', async (event: {target: IFCModel})=>{
-                    if(openModel == event.target)
+            document.addEventListener('onModelAdded', (e:CustomEvent<IFCModel>)=>{
+                e.detail.dispatcher.addEventListener('onModelSelected', async (event: {target: IFCDispatcher})=>{
+                    if(openModel == event.target.ifc)
                         return;
                     
-                    const id = event.target.id;
-                    openModel = event.target;
+                    const id = event.target.ifc.ifcID;
+                    openModel = event.target.ifc;
                 
                     setSpatialStructure([]);
                     const spatialStructure = await webIFC.properties.getSpatialStructure(id, true);

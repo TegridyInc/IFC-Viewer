@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { FoldoutComponent, FoldoutElementComponent } from './UIUtility.component';
-import { IFCModel } from '../Viewer/IFCModel'
+import { IFCModel } from '../Viewer/IFC'
 import { JSX } from 'react/jsx-runtime';
 import { SxProps } from '@mui/material';
 
@@ -61,7 +61,7 @@ function MaterialFoldout(props: { ifcModel:IFCModel, property: { [attribute: str
     const foldoutName = React.useRef('Materials');
     
     const getMaterials = async () =>{
-        const id = props.ifcModel.id;
+        const id = props.ifcModel.ifcID;
         const materialsProperty = await webIFC.properties.getMaterialsProperties(id, props.property.expressID);
     
         var elements: JSX.Element | JSX.Element[];
@@ -133,7 +133,7 @@ function PropertySetsFoldout(props: { property: { [attribute: string]: any }, if
 
     const mounted = React.useRef(false);
     const getPropertySets = async () => {
-        const propertySetsProperty = await webIFC.properties.getPropertySets(props.ifcModel.id, props.property.expressID);
+        const propertySetsProperty = await webIFC.properties.getPropertySets(props.ifcModel.ifcID, props.property.expressID);
 
         if (propertySetsProperty.length != 0) {
             const elements = await Promise.all(propertySetsProperty.map(async propertySet => {
@@ -142,7 +142,7 @@ function PropertySetsFoldout(props: { property: { [attribute: string]: any }, if
                 var set: any;
                 if(handles) {
                     set = await Promise.all(handles.map(async handle => {
-                        const singleValue = await webIFC.properties.getItemProperties(props.ifcModel.id, handle.value);
+                        const singleValue = await webIFC.properties.getItemProperties(props.ifcModel.ifcID, handle.value);
                         if(!singleValue.NominalValue) 
                             return <></>
                         else
@@ -182,9 +182,9 @@ function SpatialElementFoldout(props: { property: { [attribute: string]: any }, 
     const mounted = React.useRef(false);
     
     const getSpatialStructure = async () => {
-        const spatialStructure = await webIFC.properties.getSpatialStructure(props.ifcModel.id);
+        const spatialStructure = await webIFC.properties.getSpatialStructure(props.ifcModel.ifcID);
         const spatialElementID = GetSpatialElement(spatialStructure, props.property.expressID);
-        const spatialElementProperty = await webIFC.properties.getItemProperties(props.ifcModel.id, spatialElementID);
+        const spatialElementProperty = await webIFC.properties.getItemProperties(props.ifcModel.ifcID, spatialElementID);
         
         if (spatialElementProperty) {
             setSpatialElement(

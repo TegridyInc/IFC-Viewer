@@ -1,7 +1,7 @@
 import * as FRA from '@thatopen/fragments'
 import * as Components from '../Viewer/Components'
 import { ModelFoldouts } from '../Utility/IFCUtility'
-import { IFCModel }  from '../Viewer/IFCModel'
+import { IFCModel }  from '../Viewer/IFC'
 import { Stack } from '@mui/material'
 import { WindowComponent } from '../Utility/UIUtility.component'
 import * as React from 'react'
@@ -38,9 +38,7 @@ export default function Properties() {
                     var selectedIFCModel: IFCModel;
             
                     ifcModels.forEach((ifcModel) => {
-                        const object = ifcModel.object;
-
-                        object.children.forEach(child => {
+                        ifcModel.children.forEach(child => {
                             if (child.uuid == fragmentIDs) {
                                 selectedIFCModel = ifcModel;
                                 return;
@@ -53,7 +51,7 @@ export default function Properties() {
             
                     for (const fragmentID of fragmentIDMap[fragmentIDs]) {
                         const value = idsFound.find(value => {
-                            if (value.ifcModel.id == selectedIFCModel.id) {
+                            if (value.ifcModel.ifcID == selectedIFCModel.ifcID) {
                                 if (value.fragmentID == fragmentID)
                                     return true;
                             }
@@ -67,7 +65,7 @@ export default function Properties() {
                 }
 
                 const elements = await Promise.all(idsFound.map(async value => {
-                    const property = await webIFC.properties.getItemProperties(value.ifcModel.id, value.fragmentID);
+                    const property = await webIFC.properties.getItemProperties(value.ifcModel.ifcID, value.fragmentID);
                     
                     return (
                         <ModelFoldouts sx={{border: '1px solid var(--highlight-color)'}} ifcModel={value.ifcModel}  property={property}></ModelFoldouts>

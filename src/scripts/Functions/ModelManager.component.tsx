@@ -3,7 +3,7 @@ import * as FRA from '@thatopen/fragments'
 import * as Components from '../Viewer/Components'
 import {IconButton, WindowComponent, ColorInput, ToggleButton, FoldoutComponent} from '../Utility/UIUtility.component';
 import { LoadIFCModel } from '../Viewer/IFCLoader' 
-import {IFCGroup, IFCModel} from '../Viewer/IFCModel'
+import {IFCGroup, IFCModel} from '../Viewer/IFC'
 import * as React from 'react';
 import { JSX } from 'react/jsx-runtime';
 import { styled, Stack } from '@mui/material'
@@ -60,7 +60,7 @@ const ModelManagerComponent = (props: {window: React.RefObject<HTMLDivElement>})
                         return v;
                     else {
                         const children = v.props.children as any[];
-                        const index = children.findIndex((v)=> v.props.ifcModel.id == e.detail.id)
+                        const index = children.findIndex((v)=> v.props.ifcModel.ifcID == e.detail.ifcID)
                         
                         if(index == -1)
                             children.push( <ModelItemComponent ifcModel={e.detail}></ModelItemComponent> );
@@ -106,11 +106,11 @@ const ModelManagerComponent = (props: {window: React.RefObject<HTMLDivElement>})
             Components.world.scene.three.remove(e.detail.group);
         } 
 
-        const index = e.detail.group.ifcModels.findIndex((v)=>v.id == e.detail.id)
+        const index = e.detail.group.ifcModels.findIndex((v)=>v.ifcID == e.detail.ifcID)
         if(index != -1) {
             e.detail.group.ifcModels.splice(index, 1)
         }
-        e.detail.group.remove(e.detail.object);
+        e.detail.group.remove(e.detail);
         
         if(e.detail.group.ifcModels.length > 0)
             e.detail.group.recaculateBoundingBox();
@@ -122,7 +122,7 @@ const ModelManagerComponent = (props: {window: React.RefObject<HTMLDivElement>})
                 return oldItems.filter((v, i) => i != index)
             } else {
                 const children = oldItems[index].props.children;
-                const newChildren = children.filter((v:any) => v.props.ifcModel.id != e.detail.id.toString())
+                const newChildren = children.filter((v:any) => v.props.ifcModel.ifcID != e.detail.ifcID.toString())
                 
                 return oldItems.map((v, i) => {
                     if(i != index)
@@ -176,32 +176,32 @@ export default ModelManagerComponent;
 
 const ModelItemComponent = (props: {ifcModel: IFCModel})=>{
     const ifcModel = props.ifcModel;
-    const model = ifcModel.object;
+    const model = ifcModel;
 
     const [visible, setVisibilty] = React.useState(true);
 
-    const openPropertyTree = ()=> ifcModel.dispatchEvent({type: 'onPropertyTree'}) 
+    const openPropertyTree = ()=> ifcModel.dispatcher.dispatchEvent({type: 'onPropertyTree'}) 
 
     const toggleVisibility = (e:React.MouseEvent<HTMLElement>)=>{
         setVisibilty((oldValue) => !oldValue)
         const button = e.target as HTMLElement;
         button.innerHTML = !visible ? 'visibility' : 'visibility_off'; 
 
-        props.ifcModel.object.visible = !visible;
-        ifcModel.dispatchEvent({type: 'onVisibilityChanged', isVisible: !visible});
+        props.ifcModel.visible = !visible;
+        ifcModel.dispatcher.dispatchEvent({type: 'onVisibilityChanged', isVisible: !visible});
     }
 
-    const openPlans = ()=> ifcModel.dispatchEvent({type: 'onPlans'}) 
+    const openPlans = ()=> ifcModel.dispatcher.dispatchEvent({type: 'onPlans'}) 
 
     const deleteModel = ()=>{
         globalThis.onModelRemoved = new CustomEvent<IFCModel>('onModelRemoved', { detail: ifcModel });
         document.dispatchEvent(global.onModelRemoved);
         
-        webIFC.CloseModel(ifcModel.id);
+        webIFC.CloseModel(ifcModel.ifcID);
 
         Components.world.scene.three.remove(model)
-        Components.fragmentManager.disposeGroup(ifcModel.object);
-        ifcModel.object.children.forEach(child=> {
+        Components.fragmentManager.disposeGroup(ifcModel);
+        ifcModel.children.forEach(child=> {
             if(child instanceof FRA.FragmentMesh)
                 Components.world.meshes.delete(child);
         })
@@ -210,8 +210,8 @@ const ModelItemComponent = (props: {ifcModel: IFCModel})=>{
     }
 
     return(
-        <ModelItem key={props.ifcModel.id}>
-            <ModelName>{ifcModel.object.name}</ModelName>
+        <ModelItem key={props.ifcModel.ifcID}>
+            <ModelName>{ifcModel.name}</ModelName>
             <Stack sx={{alignItems: 'center'}} spacing={.5} direction={'row'}>
                 <IconButton onClick={openPlans}>stacks</IconButton>
                 <IconButton onClick={openPropertyTree}>list</IconButton>

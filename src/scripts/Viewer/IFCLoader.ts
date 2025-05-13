@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import * as Components from './Components';
 import * as IFCUtility from '../Utility/IFCUtility';
 import * as Toolbars from './Toolbar'
-import {IFCModel, IFCGroup} from './IFCModel'
+import {IFCModel, IFCGroup, IFCDispatcher} from './IFC'
 
 
 export async function LoadIFCModelUsingURL(url: string): Promise<FRA.FragmentsGroup> {
@@ -18,9 +18,10 @@ export async function LoadIFCModel(arrayBuffer: ArrayBuffer, name: string, focus
     const ifcID = webIFC.OpenModel(data);
     const model = await Components.ifcloader.load(data);
     
-    const ifcModel = new IFCModel();
-    ifcModel.object = model;
-    ifcModel.id = ifcID;
+    const ifcModel = model as IFCModel;
+    ifcModel.dispatcher = new IFCDispatcher();
+    ifcModel.dispatcher.ifc = ifcModel;
+    ifcModel.ifcID = ifcID;
     
     await Components.indexer.process(model);
     await Components.classifier.bySpatialStructure(model, {
@@ -41,7 +42,7 @@ export async function LoadIFCModel(arrayBuffer: ArrayBuffer, name: string, focus
     group.add(model)
     group.ifcModels.push(ifcModel)
     group.recaculateBoundingBox();
-    
+
     if(focus)
         Components.world.camera.controls.fitToBox(group.boundingBox.boxMesh, true, {paddingBottom: 5, paddingTop: 5, paddingLeft: 5, paddingRight: 5});
 

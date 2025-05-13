@@ -1,6 +1,7 @@
 import * as FRA from '@thatopen/fragments'
 import * as Components from '../Viewer/Components'
-import * as IFC from '../Viewer/IFCModel'
+import * as THREE from 'three'
+import {IFCDispatcher, IFCModel} from '../Viewer/IFC'
 
 document.addEventListener('onViewportLoaded', ()=>{
     Components.world.camera.controls.addEventListener("sleep", () => {
@@ -8,20 +9,19 @@ document.addEventListener('onViewportLoaded', ()=>{
     });
 })
 
-document.addEventListener('onModelAdded', (e:CustomEvent)=>{
-    const ifcModel = e.detail as IFC.IFCModel;
-    const model = ifcModel.object;
+document.addEventListener('onModelAdded', (e:CustomEvent<IFCModel>)=>{
+    const ifcModel = e.detail;
 
-    model.children.forEach(child =>{
+    ifcModel.children.forEach(child =>{
         if(child instanceof FRA.FragmentMesh)
             Components.culler.add(child);
     })
 
-    ifcModel.addEventListener('onModelMoveEnd', UpdateCuller)
+    ifcModel.dispatcher.addEventListener('onModelMoveEnd', UpdateCuller)
 })
 
-function UpdateCuller(event: {target:IFC.IFCModel}) {
-    const model = event.target.object;
+function UpdateCuller(event: {target: IFCDispatcher}) {
+    const model = event.target.ifc;
     for (const child of model.children) {
         const colorMesh = Components.culler.colorMeshes.get(child.uuid)
         if (colorMesh != undefined) {
@@ -34,15 +34,15 @@ function UpdateCuller(event: {target:IFC.IFCModel}) {
     Components.culler.needsUpdate = true;
 }
 
-document.addEventListener('onModelRemoved', (e:CustomEvent)=>{
-    const ifcModel = e.detail as IFC.IFCModel;
+document.addEventListener('onModelRemoved', (e:CustomEvent<IFCModel>)=>{
+    const ifcModel = e.detail;
 
-    ifcModel.object.children.forEach(child=>{
+    ifcModel.children.forEach(child=>{
         if(child instanceof FRA.FragmentMesh) {
             Components.culler.remove(child);
         }
     })
 
-    ifcModel.removeEventListener('onModelMoveEnd', UpdateCuller);
+    ifcModel.dispatcher.removeEventListener('onModelMoveEnd', UpdateCuller);
 })
 
