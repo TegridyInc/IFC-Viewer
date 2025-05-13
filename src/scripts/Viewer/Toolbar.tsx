@@ -167,7 +167,6 @@ export default function Toolbar(props: { modelManagerRef: React.RefObject<HTMLDi
                     <input type="file" id="ifc-file-upload" accept=".ifc" hidden />
                 </label>
             </IconButton>
-            <IconButton id='open-spatial-structure'>package_2</IconButton>
             <ToggleButton value={exploded} selected={exploded} id='explode' onClick={explodeModel}>explosion</ToggleButton>
             <div style={{position: 'relative'}} id='tools'>
                 <IconButton sx={{border: '1px solid rgba(0, 0, 0, 0.12)'}} id='open-tool-selection' onClick={()=>{ toolSelectionRef.current.style.visibility = 'visible' }}>arrow_selector_tool</IconButton>

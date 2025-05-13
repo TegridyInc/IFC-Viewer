@@ -90,7 +90,8 @@ export class IFCModel extends FragmentsGroup {
     onVisibilityChanged:{ isVisible: boolean }
     onPlans: {}
     onPropertyTree:{}
-    
+    onSpatialStructure:{}
+
     onModelMoveStart:{}
     onModelMove:{}
     onModelMoveEnd:{}

@@ -180,6 +180,8 @@ const ModelItemComponent = (props: {ifcModel: IFCModel})=>{
 
     const [visible, setVisibilty] = React.useState(true);
 
+    const openSpatialStructure = () => ifcModel.dispatcher.dispatchEvent({type: 'onSpatialStructure'})
+
     const openPropertyTree = ()=> ifcModel.dispatcher.dispatchEvent({type: 'onPropertyTree'}) 
 
     const toggleVisibility = (e:React.MouseEvent<HTMLElement>)=>{
@@ -213,6 +215,7 @@ const ModelItemComponent = (props: {ifcModel: IFCModel})=>{
         <ModelItem key={props.ifcModel.ifcID}>
             <ModelName>{ifcModel.name}</ModelName>
             <Stack sx={{alignItems: 'center'}} spacing={.5} direction={'row'}>
+                <IconButton onClick={openSpatialStructure}>package_2</IconButton>
                 <IconButton onClick={openPlans}>stacks</IconButton>
                 <IconButton onClick={openPropertyTree}>list</IconButton>
                 <ToggleButton size='small' value={visible} selected={visible} color='primary' onChange={toggleVisibility}>visibility</ToggleButton>
