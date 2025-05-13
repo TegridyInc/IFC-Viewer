@@ -1,6 +1,6 @@
 import * as React from 'react'
 import * as FRA from '@thatopen/fragments'
-import * as Components from '../Viewer/Components'
+import {highlighter, culler} from '../Viewer/Components'
 import * as THREE from 'three'
 import { WindowComponent, FoldoutComponent, FoldoutElementComponent, IconButton, ToggleButton, ColorInput } from '../Utility/UIUtility.component'
 import { ModelFoldouts } from '../Utility/IFCUtility'
@@ -10,8 +10,8 @@ import { Stack } from '@mui/material'
 */
       
 interface TypeData {
-    objects: { [attibute: string]: any }[];
-    threeObjects: FRA.FragmentMesh[];
+    data: { [attibute: string]: any }[];
+    objects: Set<FRA.FragmentMesh>;
     fragmentIDMap: { [attribute: string]: any };
     type: number;
 }
@@ -59,7 +59,7 @@ export default function PropertyTree() {
     }
 } 
 
-export function TypeFoldouts(props: { ifcModel: IFCModel }) {
+function TypeFoldouts(props: { ifcModel: IFCModel }) {
     const [items, setItems] = React.useState([]);
 
     const mounted = React.useRef(false);
@@ -75,60 +75,63 @@ export function TypeFoldouts(props: { ifcModel: IFCModel }) {
     }, []);
 
     if (!props.ifcModel)
-        return (<></>);
+        return <></>;
 
     async function UpdateItems(event: { target: IFCModel}) {
-        const highlighter = Components.highlighter;
         for (const selection in highlighter.selection) {
             if (selection != 'hover' && selection != 'select')
                 highlighter.remove(selection)
         }
     
-        setItems(items, )
+        setItems([])
 
         const ifcModel = event.target;
-
-        var objects: TypeData[] = [];
         const model = ifcModel.object;
-    
+
+        var types: TypeData[] = [];
+        var idsFound = new Set<number>();
+
         for (const child of model.children) {
             if (!(child instanceof FRA.FragmentMesh))
                 continue;
+            
+            var ids: number[] = [];
+
+            child.fragment.ids.forEach(id => {
+                if(idsFound.has(id))
+                    return;
+                
+                ids.push(id)
+                idsFound.add(id)
+            })
+
+            for (const id of ids) {
+                const properties = await webIFC.properties.getItemProperties(ifcModel.id, id);
     
-            const idsIterator = child.fragment.ids.values();
-            const id = idsIterator.next();
+                const index = types.findIndex(value => value.type == properties.type)
     
-            const properties = await webIFC.properties.getItemProperties(ifcModel.id, id.value);
-    
-            const index = objects.find(value => {
-                if (value.type == properties.type) {
-                    const index = value.objects.find(value => value.expressID == properties.expressID)
-                    if (index == undefined)
-                        value.objects.push(properties)
-    
-                    value.threeObjects.push(child);
-                    return true;
-                }
-    
-                return false;
-            });
-    
-            if (index == undefined) {
-                objects.push({ objects: [properties], threeObjects: [child], fragmentIDMap: null, type: properties.type });
+                if(index == -1) {
+                    types.push({ data: [properties], objects: new Set<FRA.FragmentMesh>([child]), fragmentIDMap: null, type: properties.type });
+                } else {
+                    types[index].data.push(properties)
+                    types[index].objects.add(child)
+                } 
             }
         }
 
-        for (const object of objects) {
-            var ids: number[] = [];
-            object.threeObjects.forEach(threeObject => {
-                const fragmentIDS = [...threeObject.fragment.ids];
-                ids = ids.concat(fragmentIDS)
+        types.forEach(type => {
+            var fragmentIds: number[] = [];
+            type.objects.forEach(object => {
+                const ids = [...object.fragment.ids.values()];
+                fragmentIds.push(...ids)
             })
 
-            object.fragmentIDMap = model.getFragmentMap(ids);            
+            type.fragmentIDMap = model.getFragmentMap(fragmentIds)
+        })
 
-            setItems((oldItems) => [...oldItems, <TypeFoldout typeData={object} ifcModel={ifcModel}></TypeFoldout>])
-        }
+        setItems(types.map(value => {
+            return <TypeFoldout typeData={value} ifcModel={ifcModel}></TypeFoldout>;
+        }))
     }
 
     return (
@@ -141,6 +144,7 @@ export function TypeFoldouts(props: { ifcModel: IFCModel }) {
 const TypeFoldout = (props: {typeData: TypeData, ifcModel: IFCModel}) => {
     const [highlighted, setHighlight] = React.useState(false);
     const [visible, setVisibilty] = React.useState(true);
+    const [isOpen, setOpenState] = React.useState(false);
 
     const name = webIFC.GetNameFromTypeCode(props.typeData.type);
 
@@ -148,11 +152,11 @@ const TypeFoldout = (props: {typeData: TypeData, ifcModel: IFCModel}) => {
     React.useEffect(()=>{
         if(!mounted.current) {
             mounted.current = true;
-            Components.highlighter.add(name, new THREE.Color(1, 0, 0))
+            highlighter.add(name, new THREE.Color(1, 0, 0))
         }
     },[])
 
-    const objectsProperties = props.typeData.objects.map(value => {
+    const objectsProperties = props.typeData.data.map(value => {
         return(
             <ModelFoldouts property={value} ifcModel={props.ifcModel} key={value.Name.value}></ModelFoldouts>
         );
@@ -166,7 +170,7 @@ const TypeFoldout = (props: {typeData: TypeData, ifcModel: IFCModel}) => {
             g: parseInt(result[2], 16) / 255,
             b: parseInt(result[3], 16) / 255
         };
-        const color = Components.highlighter.colors.get(name);
+        const color = highlighter.colors.get(name);
         if (color)
             color.set(rgb.r, rgb.g, rgb.b);
     }
@@ -177,7 +181,7 @@ const TypeFoldout = (props: {typeData: TypeData, ifcModel: IFCModel}) => {
         const button = e.target as HTMLElement;
         button.innerHTML = !highlighted ? 'lightbulb' : 'light_off'
 
-        Components.highlighter.highlightByID(name, highlighted ? {} : props.typeData.fragmentIDMap, true)
+        highlighter.highlightByID(name, highlighted ? {} : props.typeData.fragmentIDMap, true)
     }
 
     const toggleVisibility = (e:React.MouseEvent<HTMLElement>)=>{
@@ -186,8 +190,8 @@ const TypeFoldout = (props: {typeData: TypeData, ifcModel: IFCModel}) => {
         const button = e.target as HTMLElement;
         button.innerHTML = !visible ? 'visibility' : 'visibility_off'
 
-        for (const threeObject of props.typeData.threeObjects) {
-            const colorMesh = Components.culler.colorMeshes.get(threeObject.uuid);
+        for (const threeObject of props.typeData.objects) {
+            const colorMesh = culler.colorMeshes.get(threeObject.uuid);
             if (!colorMesh) {
                 threeObject.visible = !visible;
                 continue;
@@ -199,18 +203,18 @@ const TypeFoldout = (props: {typeData: TypeData, ifcModel: IFCModel}) => {
                 colorMesh.visible = true;
         }
 
-        Components.culler.needsUpdate = true;
+        culler.needsUpdate = true;
     }
 
     return (
-        <FoldoutComponent sx={{border: '1px solid var(--highlight-color)'}} key={name} name={name} header={
+        <FoldoutComponent sx={{border: '1px solid var(--highlight-color)'}} onClosed={async ()=> {setOpenState(false)}} onOpen={async ()=> {setOpenState(true)}} key={name} name={name} header={
             <Stack sx={{marginLeft: 'auto', alignItems: 'center', marginRight: '5px'}} spacing={.5} direction={'row'}>
                 <ColorInput type="color" className='color-input' defaultValue={'#ff0000'} onChange={changeHighlightColor}/>
                 <ToggleButton value={highlighted} selected={highlighted} onClick={toggleHighlight}>light_off</ToggleButton>
                 <ToggleButton value={visible} selected={visible} onClick={toggleVisibility}>visibility</ToggleButton>
             </Stack>
         }>
-            {objectsProperties}
+            {isOpen ? objectsProperties : <></>}
         </FoldoutComponent>
     )
 }
