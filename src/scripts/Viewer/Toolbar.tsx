@@ -1,6 +1,6 @@
 import * as Components from './Components'
 import * as IFCLoader from './IFCLoader'
-import * as MAT from '@mui/material';
+import { styled, Stack, Divider, ToggleButtonGroup, Tooltip } from '@mui/material';
 import {IconButton, ToggleButton} from '../Utility/UIUtility.component'
 import * as React from 'react';
 
@@ -55,7 +55,7 @@ var onToolChanged = new CustomEvent('onToolChanged', { detail: currentTool })
 //     cameraSettings.style.visibility = 'visible';
 // })
 
-const ViewportControls = MAT.styled(MAT.Stack)({
+const ViewportControls = styled(Stack)({
     display: 'flex',
     flexDirection: 'row',
     position: 'absolute',
@@ -68,13 +68,13 @@ const ViewportControls = MAT.styled(MAT.Stack)({
     padding: '5px',
 })
 
-const Divider = MAT.styled(MAT.Divider)({
+const ToolbarDivider = styled(Divider)({
     backgroundColor: '#333333',
     width: '1px',
     height: 'auto'
 })
 
-const ToolSelection = MAT.styled(MAT.ToggleButtonGroup)({
+const ToolSelection = styled(ToggleButtonGroup)({
     display: 'flex',
     visibility: 'hidden',
     flexDirection: 'row',
@@ -158,25 +158,43 @@ export default function Toolbar(props: { modelManagerRef: React.RefObject<HTMLDi
     }
 
     return (
-        <ViewportControls id='viewport-controls' direction={'row'} spacing={.5} divider={<Divider orientation='vertical'></Divider>}>
-            <IconButton onClick={() => { props.modelManagerRef.current.style.visibility = 'visible' }}>menu</IconButton>
-            <IconButton id='open-settings'>settings</IconButton>
-            <IconButton>
-                upload_file
-                <label style={{position: 'absolute', left: 0, top: 0, width: '100%', height: '100%'}}>
-                    <input type="file" id="ifc-file-upload" accept=".ifc" hidden />
-                </label>
-            </IconButton>
-            <ToggleButton value={exploded} selected={exploded} id='explode' onClick={explodeModel}>explosion</ToggleButton>
+        <ViewportControls id='viewport-controls' direction={'row'} spacing={.5} divider={<ToolbarDivider orientation='vertical'/>}>
+            <Tooltip title={'Model Manager'}>
+                <IconButton onClick={() => { props.modelManagerRef.current.style.visibility = 'visible' }}>menu</IconButton>
+            </Tooltip>
+            <Tooltip title={'Settings'}>
+                <IconButton id='open-settings'>settings</IconButton>
+            </Tooltip>
+            <Tooltip title={'Upload IFC'}>
+                <IconButton>
+                    upload_file
+                    <label style={{position: 'absolute', left: 0, top: 0, width: '100%', height: '100%'}}>
+                        <input type="file" id="ifc-file-upload" accept=".ifc" hidden />
+                    </label>
+                </IconButton>
+            </Tooltip>
+            <Tooltip title={'Explode Models'}>
+                <ToggleButton value={exploded} selected={exploded} id='explode' onClick={explodeModel}>explosion</ToggleButton>
+            </Tooltip>
             <div style={{position: 'relative'}} id='tools'>
-                <IconButton sx={{border: '1px solid rgba(0, 0, 0, 0.12)'}} id='open-tool-selection' onClick={()=>{ toolSelectionRef.current.style.visibility = 'visible' }}>arrow_selector_tool</IconButton>
+                <Tooltip title={'Select Tool'}>
+                    <IconButton sx={{border: '1px solid rgba(0, 0, 0, 0.12)'}} id='open-tool-selection' onClick={()=>{ toolSelectionRef.current.style.visibility = 'visible' }}>arrow_selector_tool</IconButton>
+                </Tooltip>
                 <ToolSelection id='tool-selection' ref={toolSelectionRef} value={tool} exclusive onChange={changeTool}>
-                    <ToggleButton color='primary' size='small' value={0} className='unselectable'>arrow_selector_tool</ToggleButton>
-                    <ToggleButton color='primary' size='small' value={1} className='unselectable'>open_with</ToggleButton>
-                    <ToggleButton color='primary' size='small' value={2} className='unselectable'>start</ToggleButton>
+                    <Tooltip title={'Highlighter'}>
+                        <ToggleButton color='primary' size='small' value={0} className='unselectable'>arrow_selector_tool</ToggleButton>
+                    </Tooltip>
+                    <Tooltip title={'Move'}>
+                        <ToggleButton color='primary' size='small' value={1} className='unselectable'>open_with</ToggleButton>
+                    </Tooltip>
+                    <Tooltip title={'Clipper'}>
+                        <ToggleButton color='primary' size='small' value={2} className='unselectable'>start</ToggleButton>
+                    </Tooltip>
                 </ToolSelection>
             </div>
-            <IconButton id='open-properties'>data_object</IconButton>
+            <Tooltip title={'IFC Properties'}>
+                <IconButton id='open-properties'>data_object</IconButton>
+            </Tooltip>
         </ViewportControls>
     );
 }

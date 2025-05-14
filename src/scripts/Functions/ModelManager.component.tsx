@@ -6,7 +6,7 @@ import { LoadIFCModel } from '../Viewer/IFCLoader'
 import {IFCGroup, IFCModel} from '../Viewer/IFC'
 import * as React from 'react';
 import { JSX } from 'react/jsx-runtime';
-import { styled, Stack } from '@mui/material'
+import { styled, Stack, Tooltip } from '@mui/material'
 import * as THREE from 'three';
 
 const ModelManager = styled(WindowComponent)({
@@ -67,12 +67,14 @@ const ModelManagerComponent = (props: {window: React.RefObject<HTMLDivElement>})
                         
                         const modelGroup = (
                             <FoldoutComponent sx={{border: '1px solid var(--highlight-color)'}} name={v.props.name} inputLabel key={v.key} header={
-                                <IconButton>
-                                    add
-                                    <label style={{position: 'absolute', left: 0, top: 0, width: '100%', height: '100%'}}>
-                                        <input type="file" onChange={(event)=>{addModelToGroup(event, e.detail.group)}} accept=".ifc" hidden />
-                                    </label>
-                                </IconButton>
+                                <Tooltip title='Add Model'>
+                                    <IconButton>
+                                        add
+                                        <label style={{position: 'absolute', left: 0, top: 0, width: '100%', height: '100%'}}>
+                                            <input type="file" onChange={(event)=>{addModelToGroup(event, e.detail.group)}} accept=".ifc" hidden />
+                                        </label>
+                                    </IconButton>
+                                </Tooltip>
                             }>
                                 {children}
                             </FoldoutComponent>
@@ -84,12 +86,14 @@ const ModelManagerComponent = (props: {window: React.RefObject<HTMLDivElement>})
             } else {
                 const modelGroup = (
                     <FoldoutComponent sx={{border: '1px solid var(--highlight-color)'}} name='New Group' inputLabel key={e.detail.group.id} header={
-                        <IconButton>
-                            add
-                            <label style={{position: 'absolute', left: 0, top: 0, width: '100%', height: '100%'}}>
-                                <input type="file" onChange={(event)=>{addModelToGroup(event, e.detail.group)}} accept=".ifc" hidden />
-                            </label>
-                        </IconButton>
+                        <Tooltip title='Add Model'>
+                            <IconButton>
+                                add
+                                <label style={{position: 'absolute', left: 0, top: 0, width: '100%', height: '100%'}}>
+                                    <input type="file" onChange={(event)=>{addModelToGroup(event, e.detail.group)}} accept=".ifc" hidden />
+                                </label>
+                            </IconButton>
+                        </Tooltip>
                     }> 
                         {[<ModelItemComponent ifcModel={e.detail}></ModelItemComponent>]}
                     </FoldoutComponent>
@@ -130,12 +134,14 @@ const ModelManagerComponent = (props: {window: React.RefObject<HTMLDivElement>})
                     else {
                         const modelGroup = (
                             <FoldoutComponent sx={{border: '1px solid var(--highlight-color)'}} name={v.props.name} key={v.key} header={
-                                <IconButton>
-                                    add
-                                    <label style={{position: 'absolute', left: 0, top: 0, width: '100%', height: '100%'}}>
-                                        <input type="file" onChange={(event)=>{addModelToGroup(event, e.detail.group)}} accept=".ifc" hidden />
-                                    </label>
-                                </IconButton>
+                                <Tooltip title='Add Model'>
+                                    <IconButton>
+                                        add
+                                        <label style={{position: 'absolute', left: 0, top: 0, width: '100%', height: '100%'}}>
+                                            <input type="file" onChange={(event)=>{addModelToGroup(event, e.detail.group)}} accept=".ifc" hidden />
+                                        </label>
+                                    </IconButton>
+                                </Tooltip>
                             }> 
                                 {newChildren}
                             </FoldoutComponent>
@@ -215,11 +221,21 @@ const ModelItemComponent = (props: {ifcModel: IFCModel})=>{
         <ModelItem key={props.ifcModel.ifcID}>
             <ModelName>{ifcModel.name}</ModelName>
             <Stack sx={{alignItems: 'center'}} spacing={.5} direction={'row'}>
-                <IconButton onClick={openSpatialStructure}>package_2</IconButton>
-                <IconButton onClick={openPlans}>stacks</IconButton>
-                <IconButton onClick={openPropertyTree}>list</IconButton>
-                <ToggleButton size='small' value={visible} selected={visible} color='primary' onChange={toggleVisibility}>visibility</ToggleButton>
-                <IconButton onClick={deleteModel}>delete</IconButton>
+                <Tooltip title='Spatial Structure'>
+                    <IconButton onClick={openSpatialStructure}>package_2</IconButton>
+                </Tooltip>
+                <Tooltip title='Floor Plans'>
+                    <IconButton onClick={openPlans}>stacks</IconButton>
+                </Tooltip>
+                <Tooltip title='Property Tree'>
+                    <IconButton onClick={openPropertyTree}>list</IconButton>
+                </Tooltip>
+                <Tooltip title='Visibility'>
+                    <ToggleButton size='small' value={visible} selected={visible} color='primary' onChange={toggleVisibility}>visibility</ToggleButton>
+                </Tooltip>
+                <Tooltip title='Delete'>
+                    <IconButton onClick={deleteModel}>delete</IconButton>
+                </Tooltip>
             </Stack>
         </ModelItem>
     )

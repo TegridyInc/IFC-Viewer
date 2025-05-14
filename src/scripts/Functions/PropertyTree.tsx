@@ -5,7 +5,7 @@ import * as THREE from 'three'
 import { WindowComponent, FoldoutComponent, FoldoutElementComponent, IconButton, ToggleButton, ColorInput } from '../Utility/UIUtility.component'
 import { ModelFoldouts } from '../Utility/IFCUtility'
 import {IFCDispatcher, IFCModel} from '../Viewer/IFC'
-import { Stack } from '@mui/material'
+import { Stack, Tooltip } from '@mui/material'
 /*
 */
       
@@ -207,9 +207,15 @@ const TypeFoldout = (props: {typeData: TypeData, ifcModel: IFCModel}) => {
     return (
         <FoldoutComponent sx={{border: '1px solid var(--highlight-color)'}} onClosed={async ()=> {setOpenState(false)}} onOpen={async ()=> {setOpenState(true)}} key={name} name={name} header={
             <Stack sx={{marginLeft: 'auto', alignItems: 'center', marginRight: '5px'}} spacing={.5} direction={'row'}>
-                <ColorInput type="color" className='color-input' defaultValue={'#ff0000'} onChange={changeHighlightColor}/>
-                <ToggleButton value={highlighted} selected={highlighted} onClick={toggleHighlight}>light_off</ToggleButton>
-                <ToggleButton value={visible} selected={visible} onClick={toggleVisibility}>visibility</ToggleButton>
+                <Tooltip title='Highlight Color'>
+                    <ColorInput type="color" className='color-input' defaultValue={'#ff0000'} onChange={changeHighlightColor}/>
+                </Tooltip>
+                <Tooltip title='Highlight'>
+                    <ToggleButton value={highlighted} selected={highlighted} onClick={toggleHighlight}>light_off</ToggleButton>
+                </Tooltip>
+                <Tooltip title='Visibility'>
+                    <ToggleButton value={visible} selected={visible} onClick={toggleVisibility}>visibility</ToggleButton>
+                </Tooltip>
             </Stack>
         }>
             {isOpen ? objectsProperties : <></>}
