@@ -93,27 +93,21 @@ function TypeFoldouts(props: { ifcModel: IFCModel }) {
         for (const child of ifcModel.children) {
             if (!(child instanceof FRA.FragmentMesh))
                 continue;
-            
-            var ids: number[] = [];
-
-            child.fragment.ids.forEach(id => {
-                if(idsFound.has(id))
-                    return;
-                
-                ids.push(id)
-                idsFound.add(id)
-            })
-
-            for (const id of ids) {
+        
+            for (const id of child.fragment.ids) { 
                 const properties = await webIFC.properties.getItemProperties(ifcModel.ifcID, id);
                 const index = types.findIndex(value => value.type == properties.type)
     
                 if(index == -1) {
                     types.push({ data: [properties], objects: new Set<FRA.FragmentMesh>([child]), fragmentIDMap: null, type: properties.type });
                 } else {
-                    types[index].data.push(properties)
+                    if(!idsFound.has(id)) {
+                        types[index].data.push(properties)
+                    }
                     types[index].objects.add(child)
                 } 
+    
+                idsFound.add(id)
             }
         }
 
