@@ -54,9 +54,12 @@ export default function Viewport() {
 
     const modelManagerRef = React.useRef<HTMLDivElement>(undefined);
 
+    var xOffset = 0;
+    var yOffset = 0;
+
     const MoveViewport = (e: MouseEvent) => {
-        viewportRef.current.style.top = `${viewportRef.current.offsetTop + e.movementY}px`;
-        viewportRef.current.style.left = `${viewportRef.current.offsetLeft + e.movementX}px`;
+        viewportRef.current.style.top = `${yOffset + e.clientY}px`;
+        viewportRef.current.style.left = `${xOffset + e.clientX}px`;
     }
     
     const mounted = React.useRef(false);
@@ -102,6 +105,9 @@ export default function Viewport() {
                     id="viewport-label" 
                     className='unselectable' 
                     onMouseDown={(e) => { 
+                        xOffset = viewportRef.current.offsetLeft - e.clientX;
+                        yOffset = viewportRef.current.offsetTop - e.clientY;
+
                         document.addEventListener('mousemove', MoveViewport);
                         document.addEventListener('mouseup', ()=>{ 
                             document.removeEventListener('mousemove', MoveViewport)

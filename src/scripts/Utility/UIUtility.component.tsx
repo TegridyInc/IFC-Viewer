@@ -1,4 +1,4 @@
-import { chain, clamp, divide, fill, parseInt, round } from 'lodash';
+import { chain, clamp, divide, fill, parseInt, round, xor } from 'lodash';
 import * as DockerUtility from './DockerUtility';
 import { JSX } from 'react/jsx-runtime';
 import * as React from 'react';
@@ -157,6 +157,8 @@ export const WindowComponent = (props: { children?: React.ReactNode[] | React.Re
     containerRef = props.container ? props.container : React.useRef(undefined);
 
     var windowData: WindowData;
+    var xOffset = 0;
+    var yOffset = 0;
 
     const mounted = React.useRef(false);
     React.useEffect(()=>{
@@ -171,15 +173,18 @@ export const WindowComponent = (props: { children?: React.ReactNode[] | React.Re
     }, [])
 
     const handleWindow = (e: React.MouseEvent<HTMLDivElement>)=>{
+        xOffset = rootRef.current.offsetLeft - e.clientX;
+        yOffset = rootRef.current.offsetTop - e.clientY;
+
         document.addEventListener('mousemove', moveWindowFunc);
         document.addEventListener('mouseup', ()=>{
             document.removeEventListener('mousemove', moveWindowFunc)
         }, {once: true})
     }
-    
+        
     const moveWindowFunc = (e: MouseEvent) => {
-        rootRef.current.style.top = `${ rootRef.current.offsetTop + e.movementY}px`;
-        rootRef.current.style.left = `${ rootRef.current.offsetLeft + e.movementX}px`;
+        rootRef.current.style.top = `${e.clientY + yOffset}px`;
+        rootRef.current.style.left = `${e.clientX + xOffset}px`;
     };
     
     const closeWindow = (e:React.MouseEvent)=>{
