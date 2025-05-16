@@ -33,7 +33,9 @@ const ModelName = styled('div')({
     marginRight: 'auto',
 })
 
-const ModelManagerComponent = (props: {window: React.RefObject<HTMLDivElement>}) => {
+const ModelManagerComponent = () => {
+    const rootRef = React.useRef<HTMLDivElement>(undefined);
+    const containerRef = React.useRef<HTMLDivElement>(undefined);
     const [items, setItems] = React.useState<JSX.Element[]>([]);
 
     const addModelToGroup = (e: React.FormEvent<HTMLInputElement>, group:IFCGroup)=>{
@@ -158,14 +160,19 @@ const ModelManagerComponent = (props: {window: React.RefObject<HTMLDivElement>})
     React.useEffect(()=>{
         if(!mounted.current) {
             mounted.current = true;
+            
             document.addEventListener('onModelAdded', addModel)
-
             document.addEventListener('onModelRemoved', removeModel)
+            
+            document.getElementById('open-model-manager').addEventListener('click', ()=>{
+                if(containerRef.current.parentElement == rootRef.current) 
+                    rootRef.current.style.visibility = 'visible';
+            })
         }
     }, [])
     
     return (
-        <ModelManager label='Model Manager' root={props.window}>
+        <ModelManager label='Model Manager' root={rootRef} container={containerRef}>
             {
                 items.length != 0 ?
                 <Stack spacing={1}>

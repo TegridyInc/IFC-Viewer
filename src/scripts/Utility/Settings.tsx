@@ -10,6 +10,7 @@ const SettingsComponent = () => {
     const [navigation, setNavigation] = React.useState(0)
 
     const rootRef = React.useRef<HTMLDivElement>(undefined);
+    const containerRef = React.useRef<HTMLDivElement>(undefined);
     const mounted = React.useRef(false);
 
     React.useEffect(()=>{
@@ -18,7 +19,8 @@ const SettingsComponent = () => {
 
             const openSettings = document.getElementById('open-settings')
             openSettings.addEventListener('click', () => {
-                rootRef.current.style.visibility = 'visible'
+                if(containerRef.current.parentElement == rootRef.current) 
+                    rootRef.current.style.visibility = 'visible'
             })
         }
     }, [])
@@ -39,7 +41,7 @@ const SettingsComponent = () => {
     }
 
     return (
-        <Settings label={'Settings'} root={rootRef}>
+        <Settings label={'Settings'} root={rootRef} container={containerRef}>
             <Stack spacing={.5}>
                 <FoldoutComponent name='Camera' sx={{border: '1px solid var(--highlight-color)'}}>
                     <FormControl variant="filled" fullWidth>

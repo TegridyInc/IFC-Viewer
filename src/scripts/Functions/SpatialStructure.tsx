@@ -31,10 +31,12 @@ const SpatialStructureElement = (props: {element: any}) => {
 
 export default function SpatialStructure() {
     const rootRef = React.useRef<HTMLDivElement>(undefined);
+    const containerRef = React.useRef<HTMLDivElement>(undefined);
     const [spatialStructure, setSpatialStructure] = React.useState(undefined);
 
     const getSpatialStructure = async (event: {target: IFCDispatcher}) => {
-        rootRef.current.style.visibility = 'visible';
+        if(containerRef.current.parentElement == rootRef.current) 
+            rootRef.current.style.visibility = 'visible';
 
         if(openModel == event.target.ifc)
             return;
@@ -66,7 +68,7 @@ export default function SpatialStructure() {
     }, [])
 
     return (
-        <WindowComponent label='Spatial Structure' root={rootRef}>
+        <WindowComponent label='Spatial Structure' root={rootRef} container={containerRef}>
             {spatialStructure}
         </WindowComponent>
     )

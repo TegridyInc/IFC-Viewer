@@ -52,8 +52,6 @@ globalThis.debug = () => {
 export default function Viewport() {
     viewportRef = React.useRef<HTMLDivElement>(undefined)
 
-    const modelManagerRef = React.useRef<HTMLDivElement>(undefined);
-
     var xOffset = 0;
     var yOffset = 0;
 
@@ -118,9 +116,9 @@ export default function Viewport() {
                 <ContainerComponent></ContainerComponent>
                 <Docker isLeftDocker={false}/>
                 <Docker isLeftDocker={true}/>
-                <ToolBar modelManagerRef={modelManagerRef}></ToolBar>
+                <ToolBar></ToolBar>
             </div>
-            <ModelManager window={modelManagerRef}></ModelManager>
+            <ModelManager></ModelManager>
             <PropertyTree></PropertyTree>
             <Properties></Properties>
             <SpatialStructure></SpatialStructure>

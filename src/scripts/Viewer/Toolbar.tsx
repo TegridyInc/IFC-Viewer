@@ -89,7 +89,7 @@ const ToolSelection = styled(ToggleButtonGroup)({
     padding: '2px'
 })
 
-export default function Toolbar(props: { modelManagerRef: React.RefObject<HTMLDivElement> }) {
+export default function Toolbar() {
     const toolSelectionRef = React.useRef<HTMLDivElement>(undefined);
 
     const [tool, setTool] = React.useState(0)
@@ -160,7 +160,7 @@ export default function Toolbar(props: { modelManagerRef: React.RefObject<HTMLDi
     return (
         <ViewportControls id='viewport-controls' direction={'row'} spacing={.5} divider={<ToolbarDivider orientation='vertical'/>}>
             <Tooltip title={'Model Manager'}>
-                <IconButton onClick={() => { props.modelManagerRef.current.style.visibility = 'visible' }}>menu</IconButton>
+                <IconButton id='open-model-manager'>menu</IconButton>
             </Tooltip>
             <Tooltip title={'Settings'}>
                 <IconButton id='open-settings'>settings</IconButton>
