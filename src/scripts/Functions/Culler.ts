@@ -3,7 +3,7 @@ import * as Components from '../Viewer/Components'
 import * as THREE from 'three'
 import {IFCDispatcher, IFCModel} from '../Viewer/IFC'
 
-const colorMeshes = new Map<string, boolean>();
+const meshState = new Map<string, boolean>();
 
 document.addEventListener('onViewportLoaded', ()=>{
     Components.world.camera.controls.addEventListener("sleep", () => {
@@ -15,10 +15,8 @@ document.addEventListener('onModelAdded', (e:CustomEvent<IFCModel>)=>{
     const ifcModel = e.detail;
 
     ifcModel.children.forEach(child =>{
-        if(child instanceof FRA.FragmentMesh) {
+        if(child instanceof FRA.FragmentMesh) 
             Components.culler.add(child);
-            colorMeshes.set(child.uuid, true);
-        }
     })
     Components.culler.needsUpdate = true;
     
@@ -31,20 +29,23 @@ function UpdateColorMeshVisibility(event: {target: IFCDispatcher}) {
 
     if(!model.visible) {
         model.children.forEach(child => {
-            const colorMesh = Components.culler.colorMeshes.get(child.uuid)
-            if (colorMesh != undefined) {
-                colorMeshes.set(child.uuid, colorMesh.visible);
-                colorMesh.visible = false;
-            }
+            if(child instanceof FRA.FragmentMesh) {
+                const colorMesh = Components.culler.colorMeshes.get(child.uuid);
+                if (colorMesh != undefined) 
+                    meshState.set(child.uuid, colorMesh.visible);
+                else 
+                    meshState.set(child.uuid, child.visible);
+                
+                Components.fragmentHider.set(false, model.getFragmentMap(child.fragment.ids));
+            } 
         })
-
+        
         Components.culler.needsUpdate = true;
     } else {
         model.children.forEach(child => {
-            const colorMesh = Components.culler.colorMeshes.get(child.uuid)
-            if (colorMesh != undefined) {
-                colorMesh.visible = colorMeshes.get(child.uuid);
-            }
+            if(child instanceof FRA.FragmentMesh) {
+                Components.fragmentHider.set(meshState.get(child.uuid), model.getFragmentMap(child.fragment.ids));
+            } 
         })
 
         Components.culler.needsUpdate = true;
@@ -72,10 +73,8 @@ document.addEventListener('onModelRemoved', (e:CustomEvent<IFCModel>)=>{
     const ifcModel = e.detail;
 
     ifcModel.children.forEach(child=>{
-        if(child instanceof FRA.FragmentMesh) {
+        if(child instanceof FRA.FragmentMesh) 
             Components.culler.remove(child);
-            colorMeshes.delete(child.uuid);
-        }
     })
 
     ifcModel.dispatcher.removeEventListener('onModelMoveEnd', UpdateColorMeshPosition);

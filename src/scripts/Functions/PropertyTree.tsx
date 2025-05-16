@@ -1,6 +1,6 @@
 import * as React from 'react'
 import * as FRA from '@thatopen/fragments'
-import {highlighter, culler} from '../Viewer/Components'
+import {highlighter, culler, fragmentHider} from '../Viewer/Components'
 import * as THREE from 'three'
 import { WindowComponent, FoldoutComponent, FoldoutElementComponent, IconButton, ToggleButton, ColorInput } from '../Utility/UIUtility.component'
 import { ModelFoldouts } from '../Utility/IFCUtility'
@@ -186,6 +186,9 @@ const TypeFoldout = (props: {typeData: TypeData, ifcModel: IFCModel}) => {
     }
 
     const toggleVisibility = (e:React.MouseEvent<HTMLElement>)=>{
+        if(!props.ifcModel.visible)
+            return;
+        
         setVisibilty((oldValue)=>{
             typeState.get(props.ifcModel.ifcID).set(props.typeData.type, { isVisible: !oldValue, isHighlighted: highlighted, highlightColor: highlightColor });
             return !oldValue
@@ -203,6 +206,8 @@ const TypeFoldout = (props: {typeData: TypeData, ifcModel: IFCModel}) => {
             else
                 colorMesh.visible = true;
         }
+
+        fragmentHider.set(!visible, props.typeData.fragmentIDMap);
 
         culler.needsUpdate = true;
     }

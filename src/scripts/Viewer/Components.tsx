@@ -11,6 +11,7 @@ export const ifcloader = components.get(COM.IfcLoader);
 export const worlds = components.get(COM.Worlds);
 export const world = worlds.create<COM.SimpleScene, COM.OrthoPerspectiveCamera, OBF.PostproductionRenderer>();
 export const fragmentManager = components.get(COM.FragmentsManager);
+export const fragmentHider = components.get(COM.Hider);
 export const clipper = components.get(COM.Clipper);
 export const cullers = components.get(COM.Cullers);
 export const boundingBoxer = components.get(COM.BoundingBoxer);
@@ -66,7 +67,6 @@ export function ContainerComponent() {
         world.scene.setup({ backgroundColor: new THREE.Color(.05, .05, .05) });
         
         highlighter.setup({ world });
-        
         grid = grids.create(world);
         caster = casters.get(world);
         
