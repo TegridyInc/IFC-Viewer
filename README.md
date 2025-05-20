@@ -29,4 +29,4 @@ Voer in de command prompt het volgende commando uit om alle benodigde pakketten 
 ### Start de applicatie
 Zodra alle pakketten zijn geïnstalleerd, kun je de applicatie starten met het volgende commando: npm start
 
-De webapplicatie wordt nu gestart en is bereikbaar via je browser op http://localhost:3000/, tenzij anders aangegeven in de console.
+De webapplicatie wordt nu gestart en is bereikbaar via je browser op http://localhost:8080/, tenzij anders aangegeven in de console.
