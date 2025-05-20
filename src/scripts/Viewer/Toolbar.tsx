@@ -1,18 +1,8 @@
-import * as Components from './Components'
-import * as IFCLoader from './IFCLoader'
+import { exploder, culler, highlighter, clipper } from './Components'
+import { LoadIFCModel } from './IFCLoader'
 import { styled, Stack, Divider, ToggleButtonGroup, Tooltip } from '@mui/material';
-import {IconButton, ToggleButton} from '../Utility/UIUtility.component'
-import * as React from 'react';
-
-var fileUpload: HTMLInputElement;
-var projection: HTMLSelectElement;
-var navigation: HTMLSelectElement;
-
-var openCameraSettings: HTMLElement;
-var cameraSettings: HTMLElement;
-
-var toolSelection: HTMLElement;
-var openToolSelection: HTMLElement;
+import { IconButton, ToggleButton } from '../Utility/UIUtility.component'
+import { useRef, useState, useEffect, ChangeEvent, MouseEvent } from 'react';
 
 export enum Tools {
     Select,
@@ -21,39 +11,11 @@ export enum Tools {
 }
 
 export var toolEnabled = true;
+
+var toolSelection: HTMLElement;
+var openToolSelection: HTMLElement;
 var currentTool = Tools.Select;
 var onToolChanged = new CustomEvent('onToolChanged', { detail: currentTool })
-
-// projection.oninput = () => {
-//     switch (projection.value) {
-//         case "perspective":
-//             Components.world.camera.projection.set("Perspective");
-//             Components.grid.fade = true;
-//             break;
-//         case "orthographic":
-//             if (Components.world.camera.mode.id == 'FirstPerson') {
-//                 projection.value = 'perspective'
-//                 break;
-//             }
-
-//             Components.world.camera.projection.set("Orthographic");
-//             Components.grid.fade = false;
-//             break;
-//     }
-// };
-
-// navigation.oninput = () => {
-//     if (Components.world.camera.projection.current == 'Orthographic') {
-//         navigation.value = 'Orbit'
-//         return;
-//     }
-
-//     Components.world.camera.set(navigation.value as COM.NavModeID);
-// };
-
-// openCameraSettings.addEventListener('click', () => {
-//     cameraSettings.style.visibility = 'visible';
-// })
 
 const ViewportControls = styled(Stack)({
     display: 'flex',
@@ -90,50 +52,43 @@ const ToolSelection = styled(ToggleButtonGroup)({
 })
 
 export default function Toolbar() {
-    const toolSelectionRef = React.useRef<HTMLDivElement>(undefined);
+    const toolSelectionRef = useRef<HTMLDivElement>(undefined);
 
-    const [tool, setTool] = React.useState(0)
+    const [tool, setTool] = useState(0)
+    const [exploded, setExploded] = useState(false);
 
-    const mounted = React.useRef(false)
-    React.useEffect(()=>{
+    const mounted = useRef(false)
+    useEffect(()=>{
         if(!mounted.current) {
             mounted.current = true;
 
-            fileUpload = document.getElementById('ifc-file-upload') as HTMLInputElement;
-            projection = document.getElementById('projection') as HTMLSelectElement;
-            navigation = document.getElementById('navigation') as HTMLSelectElement;
-
-            openCameraSettings = document.getElementById('open-camera-settings');
-            cameraSettings = document.getElementById('camera-settings');
-
             toolSelection = document.getElementById('tool-selection');
             openToolSelection = document.getElementById('open-tool-selection');
-
-            fileUpload.addEventListener('input', () => {
-                const file = fileUpload.files[0];
-                if (!file)
-                    return;
-        
-                const reader = new FileReader();
-                reader.onload = () => {
-                    const data = new Uint8Array(reader.result as ArrayBuffer);
-                    IFCLoader.LoadIFCModel(data, file.name.split(".ifc")[0]);
-                }
-        
-                reader.readAsArrayBuffer(file);
-            })
         }
     }, [])
 
-    const [exploded, setExploded] = React.useState(false);
-    const explodeModel = ()=>{
-        setExploded((oldValue)=> !oldValue)
-        Components.exploder.set(!exploded);
+    const createIFCModel = (e: ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files[0];
+        if (!file)
+            return;
 
-        Components.culler.needsUpdate = true;
+        const reader = new FileReader();
+        reader.onload = () => {
+            const data = new Uint8Array(reader.result as ArrayBuffer);
+            LoadIFCModel(data, file.name.split(".ifc")[0]);
+        }
+
+        reader.readAsArrayBuffer(file);
     }
 
-    const changeTool = (e: React.MouseEvent<HTMLElement>, v: number) => {
+    const explodeModel = ()=>{
+        setExploded((oldValue)=> !oldValue)
+        exploder.set(!exploded);
+
+        culler.needsUpdate = true;
+    }
+
+    const changeTool = (e: MouseEvent<HTMLElement>, v: number) => {
         if(v == null)
             return;
 
@@ -169,7 +124,7 @@ export default function Toolbar() {
                 <IconButton>
                     upload_file
                     <label style={{position: 'absolute', left: 0, top: 0, width: '100%', height: '100%'}}>
-                        <input type="file" id="ifc-file-upload" accept=".ifc" hidden />
+                        <input type="file" id="ifc-file-upload" accept=".ifc" hidden onInput={createIFCModel} />
                     </label>
                 </IconButton>
             </Tooltip>
@@ -202,14 +157,14 @@ export default function Toolbar() {
 export function DeactivateTool() {
     switch (currentTool) {
         case Tools.Select:
-            Components.highlighter.clear();
-            Components.highlighter.enabled = false;
+            highlighter.clear();
+            highlighter.enabled = false;
             break;
         case Tools.Move:
             break;
         case Tools.Clipper:
-            Components.clipper.deleteAll();
-            Components.clipper.enabled = false;
+            clipper.deleteAll();
+            clipper.enabled = false;
             break;
     }
 }
@@ -217,13 +172,13 @@ export function DeactivateTool() {
 export function ActivateTool() {
     switch (currentTool) {
         case Tools.Select:
-            Components.highlighter.enabled = true;
+            highlighter.enabled = true;
             break;
         case Tools.Move:
 
             break;
         case Tools.Clipper:
-            Components.clipper.enabled = true;
+            clipper.enabled = true;
             break;
     }
 }

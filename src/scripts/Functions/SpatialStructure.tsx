@@ -1,12 +1,11 @@
-import * as React from 'react';
-import * as THREE from 'three';
+import { useState, useRef, useEffect } from 'react';
 import {FoldoutComponent, WindowComponent, FoldoutElementComponent} from '../Utility/UIUtility.component'
 import {IFCDispatcher, IFCModel } from '../Viewer/IFC'
 
 var openModel: IFCModel;
 
 const SpatialStructureElement = (props: {element: any}) => {
-    const [isOpen, setIsOpen] = React.useState(false);
+    const [isOpen, setIsOpen] = useState(false);
 
     if (props.element.children.length > 0) {
         const children = props.element.children as any[];
@@ -30,9 +29,9 @@ const SpatialStructureElement = (props: {element: any}) => {
 }
 
 export default function SpatialStructure() {
-    const rootRef = React.useRef<HTMLDivElement>(undefined);
-    const containerRef = React.useRef<HTMLDivElement>(undefined);
-    const [spatialStructure, setSpatialStructure] = React.useState(undefined);
+    const rootRef = useRef<HTMLDivElement>(undefined);
+    const containerRef = useRef<HTMLDivElement>(undefined);
+    const [spatialStructure, setSpatialStructure] = useState(undefined);
 
     const getSpatialStructure = async (event: {target: IFCDispatcher}) => {
         if(containerRef.current.parentElement == rootRef.current) 
@@ -58,8 +57,8 @@ export default function SpatialStructure() {
         )
     }
 
-    const mounted = React.useRef(false);
-    React.useEffect(()=>{
+    const mounted = useRef(false);
+    useEffect(()=>{
         if(!mounted.current) {
             mounted.current = true;
             

@@ -6,7 +6,7 @@ const Docker = styled('div')({
     display: 'flex',
     position: 'absolute',
     flexDirection: 'column',
-    width: '200px',
+    width: '400px',
     height: 'calc(100% - 20px)',
     top: '50%',
     backgroundColor: 'var(--secondary-color)',
@@ -61,6 +61,7 @@ const DockerContainer = styled('div')({
         resize: 'none',
         width: '100%',
         height: '100%',
+        maxHeight: 'unset',
     }
 })
 

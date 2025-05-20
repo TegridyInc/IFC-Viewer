@@ -41,29 +41,6 @@ html {
     height: 100%;
 }
 
-#viewport {
-    display: flex;
-    align-items: center;
-    flex-direction: column;
-    position: absolute;
-    z-index: 100;
-    top: 50%;
-    left: 50%;
-
-    border: 2px solid var(--accent-color);
-    border-radius: 5px;
-}
-
-#viewport-label {
-    background-color: var(--secondary-color);
-    padding: 10px 5px;
-    width: 100%;
-    text-align: center;
-    border-radius: 5px;
-    box-sizing: border-box;
-    font-weight: bold;
-}
-
 .unselectable {
     -webkit-touch-callout: none;
     -webkit-user-select: none;

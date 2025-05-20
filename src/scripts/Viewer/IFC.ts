@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import {FragmentMesh, FragmentsGroup} from '@thatopen/fragments'
+import {FragmentsGroup} from '@thatopen/fragments'
 import {boundingBoxer} from './Components'
 
 export interface BoundingBoxData {

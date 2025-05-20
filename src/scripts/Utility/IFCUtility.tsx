@@ -1,11 +1,11 @@
-import * as React from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { FoldoutComponent, FoldoutElementComponent } from './UIUtility.component';
 import { IFCModel } from '../Viewer/IFC'
 import { JSX } from 'react/jsx-runtime';
 import { SxProps } from '@mui/material';
 
 export function ModelFoldouts(props: {sx?:SxProps, property: { [attribute: string]: any }, ifcModel: IFCModel}) {
-    const [isOpen, setIsOpen] = React.useState(false);
+    const [isOpen, setIsOpen] = useState(false);
 
     const foldouts = [
         <AttributesFoldout ifcModel={props.ifcModel} property={props.property}></AttributesFoldout>,
@@ -15,15 +15,15 @@ export function ModelFoldouts(props: {sx?:SxProps, property: { [attribute: strin
     ]
 
     return (
-        <FoldoutComponent sx={props.sx} name={props.property.Name.value} onOpen={async () => { setIsOpen(true) }} onClosed={async () => { setIsOpen(false) }}>
+        <FoldoutComponent sx={props.sx} name={props.property.Name.value} onOpen={() => { setIsOpen(true) }} onClosed={() => { setIsOpen(false) }}>
             {isOpen ? foldouts : <></>}
         </FoldoutComponent>
     )
 }
 
 function AttributesFoldout(props: { ifcModel:IFCModel, property: { [attribute: string]: any } }) {
-    const [attributes, setAttributes] = React.useState(undefined);
-    const [isOpen, setIsOpen] = React.useState(false);
+    const [attributes, setAttributes] = useState(undefined);
+    const [isOpen, setIsOpen] = useState(false);
 
     const getAttributes = async () =>{
         setAttributes(
@@ -34,8 +34,8 @@ function AttributesFoldout(props: { ifcModel:IFCModel, property: { [attribute: s
         )
     }
 
-    const mounted = React.useRef(false);
-    React.useEffect(()=>{
+    const mounted = useRef(false);
+    useEffect(()=>{
         if(!mounted.current) {
             mounted.current = true;
 
@@ -44,7 +44,7 @@ function AttributesFoldout(props: { ifcModel:IFCModel, property: { [attribute: s
     }, []);
     
     return (
-        <FoldoutComponent name='Attributes' onOpen={async ()=>{setIsOpen(true)}} onClosed={async ()=>{setIsOpen(false)}}>
+        <FoldoutComponent name='Attributes' onOpen={()=>{setIsOpen(true)}} onClosed={()=>{setIsOpen(false)}}>
             {!isOpen ? <></> :
                 attributes
             }
@@ -54,11 +54,11 @@ function AttributesFoldout(props: { ifcModel:IFCModel, property: { [attribute: s
 
 
 function MaterialFoldout(props: { ifcModel:IFCModel, property: { [attribute: string]: any } }) {
-    const [materials, setMaterials] = React.useState(undefined);
-    const [isOpen, setIsOpen] = React.useState(false);
+    const [materials, setMaterials] = useState(undefined);
+    const [isOpen, setIsOpen] = useState(false);
 
-    const mounted = React.useRef(false);
-    const foldoutName = React.useRef('Materials');
+    const mounted = useRef(false);
+    const foldoutName = useRef('Materials');
     
     const getMaterials = async () =>{
         const id = props.ifcModel.ifcID;
@@ -91,8 +91,8 @@ function MaterialFoldout(props: { ifcModel:IFCModel, property: { [attribute: str
 
                 return (
                     <FoldoutComponent name='Layer'>
-                        {material ? <FoldoutElementComponent label='Material' value={material.Name.value}></FoldoutElementComponent> : <FoldoutElementComponent label='Material' value='Undefined'></FoldoutElementComponent>}
-                        {layer.LayerThickness ? <FoldoutElementComponent label='Layer Thickness' value={layer.LayerThickness.value}></FoldoutElementComponent> : <></>}
+                        {material ? <FoldoutElementComponent label='Material' value={material.Name.value}/> : <FoldoutElementComponent label='Material' value='Undefined'/>}
+                        {layer.LayerThickness ? <FoldoutElementComponent label='Layer Thickness' value={layer.LayerThickness.value}/> : <></>}
                     </FoldoutComponent>
                 )
             }))
@@ -112,7 +112,7 @@ function MaterialFoldout(props: { ifcModel:IFCModel, property: { [attribute: str
         setMaterials(elements)
     }
 
-    React.useEffect(()=>{
+    useEffect(()=>{
         if(!mounted.current) {
             mounted.current = true;
 
@@ -121,17 +121,17 @@ function MaterialFoldout(props: { ifcModel:IFCModel, property: { [attribute: str
     }, []);
     
     return (
-        <FoldoutComponent name={foldoutName.current} onOpen={async()=>{setIsOpen(true)}} onClosed={async ()=>{setIsOpen(false)}}>
+        <FoldoutComponent name={foldoutName.current} onOpen={()=>{setIsOpen(true)}} onClosed={()=>{setIsOpen(false)}}>
             {isOpen ? materials : <></>}
         </FoldoutComponent>
     )
 }
 
 function PropertySetsFoldout(props: { property: { [attribute: string]: any }, ifcModel: IFCModel}) {
-    const [propertySets, setPropertySets] = React.useState(undefined);
-    const [isOpen, setIsOpen] = React.useState(false)
+    const [propertySets, setPropertySets] = useState(undefined);
+    const [isOpen, setIsOpen] = useState(false)
 
-    const mounted = React.useRef(false);
+    const mounted = useRef(false);
     const getPropertySets = async () => {
         const propertySetsProperty = await webIFC.properties.getPropertySets(props.ifcModel.ifcID, props.property.expressID);
 
@@ -146,7 +146,7 @@ function PropertySetsFoldout(props: { property: { [attribute: string]: any }, if
                         if(!singleValue.NominalValue) 
                             return <></>
                         else
-                            return <FoldoutElementComponent label={singleValue.Name.value} value={singleValue.NominalValue.value + (singleValue.Unit ? " " + singleValue.Unit.value : "")}></FoldoutElementComponent>
+                            return <FoldoutElementComponent label={singleValue.Name.value} value={singleValue.NominalValue.value + (singleValue.Unit ? " " + singleValue.Unit.value : "")}/>
                     }))
                 } 
                 
@@ -162,7 +162,7 @@ function PropertySetsFoldout(props: { property: { [attribute: string]: any }, if
     }
 
 
-    React.useEffect(()=>{
+    useEffect(()=>{
         if(!mounted.current) {
             mounted.current = true;
 
@@ -171,15 +171,15 @@ function PropertySetsFoldout(props: { property: { [attribute: string]: any }, if
     }, [])
 
     return (
-        <FoldoutComponent name='Property Sets' onOpen={async()=>{setIsOpen(true)}} onClosed={async ()=>{setIsOpen(false)}}>
+        <FoldoutComponent name='Property Sets' onOpen={()=>{setIsOpen(true)}} onClosed={()=>{setIsOpen(false)}}>
             {isOpen ? propertySets : <></>}
         </FoldoutComponent>
     )
 }
 
 function SpatialElementFoldout(props: { property: { [attribute: string]: any }, ifcModel: IFCModel }) {
-    const [spatialElement, setSpatialElement] = React.useState(undefined);
-    const mounted = React.useRef(false);
+    const [spatialElement, setSpatialElement] = useState(undefined);
+    const mounted = useRef(false);
     
     const getSpatialStructure = async () => {
         const spatialStructure = await webIFC.properties.getSpatialStructure(props.ifcModel.ifcID);
@@ -189,14 +189,14 @@ function SpatialElementFoldout(props: { property: { [attribute: string]: any }, 
         if (spatialElementProperty) {
             setSpatialElement(
                 [
-                    <FoldoutElementComponent label={'Name'} value={spatialElementProperty.Name.value}></FoldoutElementComponent>,
-                    (spatialElementProperty.Elevation ? <FoldoutElementComponent label='Elevation' value={spatialElementProperty.Elevation.value}></FoldoutElementComponent> : <></>)
+                    <FoldoutElementComponent label={'Name'} value={spatialElementProperty.Name.value}/>,
+                    (spatialElementProperty.Elevation ? <FoldoutElementComponent label='Elevation' value={spatialElementProperty.Elevation.value}/> : <></>)
                 ]
             )
         }
     }
 
-    React.useEffect(()=>{
+    useEffect(()=>{
         if(!mounted.current) {
             mounted.current = true;
            
@@ -205,8 +205,7 @@ function SpatialElementFoldout(props: { property: { [attribute: string]: any }, 
 
     return <FoldoutComponent name='Spatial Element'>{spatialElement}</FoldoutComponent>;
 }
-    
-    
+       
 function GetSpatialElement(spatialStructure: any, id: number): number | null {
     if (!spatialStructure.children)
         return null;

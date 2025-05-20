@@ -1,10 +1,11 @@
 import * as Stats from 'stats.js';
-import * as WEBIFC from 'web-ifc'
+import { IfcAPI } from 'web-ifc'
 
+import { styled } from '@mui/material'
+import { useRef, MouseEvent, useEffect } from 'react';
+
+import Container, {culler, world } from './Components';
 import { IFCModel } from './IFC';
-import * as React from 'react';
-
-import {ContainerComponent, culler, world } from './Components';
 
 import ToolBar from './Toolbar'
 import ModelManager from '../Functions/ModelManager.component';
@@ -17,7 +18,6 @@ import Settings from '../Utility/Settings'
 
 import '../Functions/TransformControls'
 import '../Functions/Culler' 
-//import '../Settings/CameraSettings'
 
 declare global {
     var debug: Function;
@@ -27,41 +27,71 @@ declare global {
 
     var onViewportLoaded: CustomEvent;
 
-    var webIFC: WEBIFC.IfcAPI;
+    var webIFC: IfcAPI;
 }
-
-global.webIFC = new WEBIFC.IfcAPI();
-webIFC.SetWasmPath("https://unpkg.com/web-ifc@0.0.66/", true);
-await webIFC.Init();
-
-global.onViewportLoaded = new CustomEvent('onViewportLoaded');
 
 const OnDebuggingEnabled = new CustomEvent('debugenabled');
 const OnDebuggingDisabled = new CustomEvent('debugdisabled')
 var isDebugging = false;
 
-export var viewportRef: React.RefObject<HTMLDivElement>;
-var isLoaded = false;
-
-globalThis.debug = () => {
+global.debug = () => {
     isDebugging = !isDebugging;
 
     isDebugging ? document.dispatchEvent(OnDebuggingEnabled) : document.dispatchEvent(OnDebuggingDisabled)
 }
 
-export default function Viewport() {
-    viewportRef = React.useRef<HTMLDivElement>(undefined)
+global.webIFC = new IfcAPI();
+webIFC.SetWasmPath("https://unpkg.com/web-ifc@0.0.66/", true);
+await webIFC.Init();
+
+global.onViewportLoaded = new CustomEvent('onViewportLoaded');
+
+const Viewport = styled('div')({
+    display: 'flex',
+    alignItems: 'center',
+    flexDirection: 'column',
+    position: 'absolute',
+    zIndex: '100',
+    top: 'calc(50% - 200px)',
+    left: 'calc(50% - 300px)',
+
+    border: '2px solid var(--accent-color)',
+    borderRadius: '5px',
+})
+
+const ViewportLabel = styled('div')({
+    backgroundColor: 'var(--secondary-color)',
+    padding: '10px 5px',
+    width: '100%',
+    textAlign: 'center',
+    borderRadius: '5px',
+    boxSizing: 'border-box',
+    fontWeight: 'bold'
+})
+
+export default function Viewer() {
+    const viewportRef = useRef<HTMLDivElement>(undefined)
 
     var xOffset = 0;
     var yOffset = 0;
 
-    const MoveViewport = (e: MouseEvent) => {
+    const handleViewport = (e: MouseEvent<HTMLDivElement>) => {
+        xOffset = viewportRef.current.offsetLeft - e.clientX;
+        yOffset = viewportRef.current.offsetTop - e.clientY;
+
+        document.addEventListener('mousemove', moveViewport);
+        document.addEventListener('mouseup', ()=>{ 
+            document.removeEventListener('mousemove', moveViewport)
+        }, {once: true}) 
+    }
+
+    const moveViewport = (e: any) => {
         viewportRef.current.style.top = `${yOffset + e.clientY}px`;
         viewportRef.current.style.left = `${xOffset + e.clientX}px`;
     }
     
-    const mounted = React.useRef(false);
-    React.useEffect(()=>{
+    const mounted = useRef(false);
+    useEffect(()=>{
         if(!mounted.current) {
             mounted.current= true;
             
@@ -98,32 +128,19 @@ export default function Viewport() {
 
     return (     
         <>
-            <div ref={viewportRef} id='viewport'>
-                <div 
-                    id="viewport-label" 
-                    className='unselectable' 
-                    onMouseDown={(e) => { 
-                        xOffset = viewportRef.current.offsetLeft - e.clientX;
-                        yOffset = viewportRef.current.offsetTop - e.clientY;
-
-                        document.addEventListener('mousemove', MoveViewport);
-                        document.addEventListener('mouseup', ()=>{ 
-                            document.removeEventListener('mousemove', MoveViewport)
-                        }, {once: true}) 
-                    }} 
-                    >IFC Viewer
-                </div>
-                <ContainerComponent></ContainerComponent>
+            <Viewport ref={viewportRef} id='viewport'>
+                <ViewportLabel className='unselectable' onMouseDown={handleViewport}>IFC Viewer</ViewportLabel>
+                <Container/>
                 <Docker isLeftDocker={false}/>
                 <Docker isLeftDocker={true}/>
-                <ToolBar></ToolBar>
-            </div>
-            <ModelManager></ModelManager>
-            <PropertyTree></PropertyTree>
-            <Properties></Properties>
-            <SpatialStructure></SpatialStructure>
-            <Plans></Plans>
-            <Settings></Settings>
+                <ToolBar/>
+            </Viewport>
+            <ModelManager/>
+            <PropertyTree/>
+            <Properties/>
+            <SpatialStructure/>
+            <Plans/>
+            <Settings/>
         </>
     );
 }

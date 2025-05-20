@@ -1,13 +1,11 @@
 import * as FRA from '@thatopen/fragments'
-
-import * as Components from '../Viewer/Components'
-import {IconButton, WindowComponent, ColorInput, ToggleButton, FoldoutComponent} from '../Utility/UIUtility.component';
+import { world, fragmentManager } from '../Viewer/Components'
+import {IconButton, WindowComponent, ToggleButton, FoldoutComponent} from '../Utility/UIUtility.component';
 import { LoadIFCModel } from '../Viewer/IFCLoader' 
 import {IFCGroup, IFCModel} from '../Viewer/IFC'
-import * as React from 'react';
+import { useRef, useState, FormEvent, useEffect, MouseEvent } from 'react';
 import { JSX } from 'react/jsx-runtime';
 import { styled, Stack, Tooltip } from '@mui/material'
-import * as THREE from 'three';
 
 const ModelManager = styled(WindowComponent)({
     alignContent: 'center',
@@ -34,22 +32,22 @@ const ModelName = styled('div')({
 })
 
 const ModelManagerComponent = () => {
-    const rootRef = React.useRef<HTMLDivElement>(undefined);
-    const containerRef = React.useRef<HTMLDivElement>(undefined);
-    const [items, setItems] = React.useState<JSX.Element[]>([]);
+    const rootRef = useRef<HTMLDivElement>(undefined);
+    const containerRef = useRef<HTMLDivElement>(undefined);
+    const [items, setItems] = useState<JSX.Element[]>([]);
 
-    const addModelToGroup = (e: React.FormEvent<HTMLInputElement>, group:IFCGroup)=>{
+    const addModelToGroup = (e: FormEvent<HTMLInputElement>, group:IFCGroup)=>{
         const file = e.currentTarget.files[0];
-            if (!file)
-                return;
-    
-            const reader = new FileReader();
-            reader.onload = () => {
-                const data = new Uint8Array(reader.result as ArrayBuffer);
-                LoadIFCModel(data, file.name.split(".ifc")[0], false, group);
-            }
-    
-            reader.readAsArrayBuffer(file);
+        if (!file)
+            return;
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            const data = new Uint8Array(reader.result as ArrayBuffer);
+            LoadIFCModel(data, file.name.split(".ifc")[0], false, group);
+        }
+
+        reader.readAsArrayBuffer(file);
     }
 
     const addModel = (e:CustomEvent<IFCModel>) => {
@@ -109,7 +107,7 @@ const ModelManagerComponent = () => {
     const removeModel = (e:CustomEvent<IFCModel>) => {
         if(e.detail.group.children.length == 3) {
             e.detail.group.clear();
-            Components.world.scene.three.remove(e.detail.group);
+            world.scene.three.remove(e.detail.group);
         } 
 
         const index = e.detail.group.ifcModels.findIndex((v)=>v.ifcID == e.detail.ifcID)
@@ -156,8 +154,8 @@ const ModelManagerComponent = () => {
         })
     }
 
-    const mounted = React.useRef(false);
-    React.useEffect(()=>{
+    const mounted = useRef(false);
+    useEffect(()=>{
         if(!mounted.current) {
             mounted.current = true;
             
@@ -186,18 +184,17 @@ const ModelManagerComponent = () => {
 
 export default ModelManagerComponent;
 
-
 const ModelItemComponent = (props: {ifcModel: IFCModel})=>{
     const ifcModel = props.ifcModel;
     const model = ifcModel;
 
-    const [visible, setVisibilty] = React.useState(true);
+    const [visible, setVisibilty] = useState(true);
 
     const openSpatialStructure = () => ifcModel.dispatcher.dispatchEvent({type: 'onSpatialStructure'})
 
     const openPropertyTree = ()=> ifcModel.dispatcher.dispatchEvent({type: 'onPropertyTree'}) 
 
-    const toggleVisibility = (e:React.MouseEvent<HTMLElement>)=>{
+    const toggleVisibility = (e:MouseEvent<HTMLElement>)=>{
         setVisibilty((oldValue) => !oldValue)
         const button = e.target as HTMLElement;
         button.innerHTML = !visible ? 'visibility' : 'visibility_off'; 
@@ -214,11 +211,11 @@ const ModelItemComponent = (props: {ifcModel: IFCModel})=>{
         
         webIFC.CloseModel(ifcModel.ifcID);
 
-        Components.world.scene.three.remove(model)
-        Components.fragmentManager.disposeGroup(ifcModel);
+        world.scene.three.remove(model)
+        fragmentManager.disposeGroup(ifcModel);
         ifcModel.children.forEach(child=> {
             if(child instanceof FRA.FragmentMesh)
-                Components.world.meshes.delete(child);
+                world.meshes.delete(child);
         })
 
         model.dispose();

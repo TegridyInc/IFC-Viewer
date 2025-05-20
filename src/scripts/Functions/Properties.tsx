@@ -1,10 +1,9 @@
-import * as FRA from '@thatopen/fragments'
-import * as Components from '../Viewer/Components'
+import { highlighter } from '../Viewer/Components'
 import { ModelFoldouts } from '../Utility/IFCUtility'
 import { IFCModel }  from '../Viewer/IFC'
 import { Stack } from '@mui/material'
 import { WindowComponent } from '../Utility/UIUtility.component'
-import * as React from 'react'
+import { useRef, useState, useEffect } from 'react'
 
 var ifcModels: IFCModel[] = [];
 
@@ -13,13 +12,13 @@ document.addEventListener('onModelAdded', (e:CustomEvent<IFCModel>)=>{
 })
 
 export default function Properties() {
-    const propertiesRootRef = React.useRef<HTMLDivElement>(undefined);
-    const propertiesContainerRef = React.useRef<HTMLDivElement>(undefined);
+    const propertiesRootRef = useRef<HTMLDivElement>(undefined);
+    const propertiesContainerRef = useRef<HTMLDivElement>(undefined);
 
-    const [properties, setProperties] = React.useState([]);
+    const [properties, setProperties] = useState([]);
 
-    const mounted = React.useRef(false);
-    React.useEffect(()=>{
+    const mounted = useRef(false);
+    useEffect(()=>{
         if(!mounted.current) {
             mounted.current = true;
 
@@ -30,7 +29,7 @@ export default function Properties() {
                 }
             })
             
-            Components.highlighter.events.select.onHighlight.add(async (fragmentIDMap)=>{
+            highlighter.events.select.onHighlight.add(async (fragmentIDMap)=>{
                 setProperties([])
             
                 var idsFound = []
@@ -75,7 +74,7 @@ export default function Properties() {
                 setProperties(elements)
             })
 
-            Components.highlighter.events.select.onClear.add(()=>{
+            highlighter.events.select.onClear.add(()=>{
                 setProperties([])
             }) 
         }

@@ -1,13 +1,11 @@
-import * as React from 'react'
-import * as FRA from '@thatopen/fragments'
-import {highlighter, culler, fragmentHider} from '../Viewer/Components'
 import * as THREE from 'three'
-import { WindowComponent, FoldoutComponent, FoldoutElementComponent, IconButton, ToggleButton, ColorInput } from '../Utility/UIUtility.component'
+import * as FRA from '@thatopen/fragments'
+import { useState, useRef, useEffect, ChangeEvent, MouseEvent } from 'react'
+import { highlighter, culler, fragmentHider } from '../Viewer/Components'
+import { WindowComponent, FoldoutComponent, ToggleButton, ColorInput } from '../Utility/UIUtility.component'
 import { ModelFoldouts } from '../Utility/IFCUtility'
-import {IFCDispatcher, IFCModel} from '../Viewer/IFC'
+import { IFCDispatcher, IFCModel } from '../Viewer/IFC'
 import { Stack, Tooltip } from '@mui/material'
-/*
-*/
       
 interface TypeData {
     data: { [attibute: string]: any }[];
@@ -19,14 +17,14 @@ interface TypeData {
 const typeState = new Map<number, Map<number, { isVisible: boolean, isHighlighted: boolean, highlightColor: THREE.Color }>>();
 
 export default function PropertyTree() {
-    const [ifcModel, setIFCModel] = React.useState<IFCModel>();
+    const [ifcModel, setIFCModel] = useState<IFCModel>();
 
-    const propertyTreeRoot = React.useRef<HTMLDivElement>(undefined);
-    const propertyTreeContainer = React.useRef<HTMLDivElement>(undefined);
+    const propertyTreeRoot = useRef<HTMLDivElement>(undefined);
+    const propertyTreeContainer = useRef<HTMLDivElement>(undefined);
 
-    const mounted = React.useRef(false);
+    const mounted = useRef(false);
 
-    React.useEffect(()=>{
+    useEffect(()=>{
         if(!mounted.current) {
             mounted.current = true;
             
@@ -63,11 +61,11 @@ export default function PropertyTree() {
 } 
 
 function TypeFoldouts(props: { ifcModel: IFCModel }) {
-    const [items, setItems] = React.useState([]);
+    const [items, setItems] = useState([]);
 
-    const mounted = React.useRef(false);
+    const mounted = useRef(false);
 
-    React.useEffect(()=>{
+    useEffect(()=>{
         if(!mounted.current) {
             mounted.current = true;
             
@@ -140,14 +138,14 @@ function TypeFoldouts(props: { ifcModel: IFCModel }) {
 }
 
 const TypeFoldout = (props: {typeData: TypeData, ifcModel: IFCModel}) => {
-    const [highlighted, setHighlight] = React.useState(typeState.get(props.ifcModel.ifcID).get(props.typeData.type).isHighlighted);
-    const [visible, setVisibilty] = React.useState(typeState.get(props.ifcModel.ifcID).get(props.typeData.type).isVisible);
-    const [highlightColor, setHighlightColor] = React.useState( typeState.get(props.ifcModel.ifcID).get(props.typeData.type).highlightColor);
-    const [isOpen, setOpenState] = React.useState(false);
+    const [highlighted, setHighlight] = useState(typeState.get(props.ifcModel.ifcID).get(props.typeData.type).isHighlighted);
+    const [visible, setVisibilty] = useState(typeState.get(props.ifcModel.ifcID).get(props.typeData.type).isVisible);
+    const [highlightColor, setHighlightColor] = useState( typeState.get(props.ifcModel.ifcID).get(props.typeData.type).highlightColor);
+    const [isOpen, setOpenState] = useState(false);
 
     const name = webIFC.GetNameFromTypeCode(props.typeData.type);
-    const mounted = React.useRef(false)
-    React.useEffect(()=>{
+    const mounted = useRef(false)
+    useEffect(()=>{
         if(!mounted.current) {
             mounted.current = true;
             highlighter.add(name, new THREE.Color(1, 0, 0))
@@ -160,7 +158,7 @@ const TypeFoldout = (props: {typeData: TypeData, ifcModel: IFCModel}) => {
         );
     });
 
-    const changeHighlightColor = (e: React.ChangeEvent<HTMLInputElement>)=>{
+    const changeHighlightColor = (e: ChangeEvent<HTMLInputElement>)=>{
         const value = (e.target as HTMLInputElement).value;
         var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(value);
         const rgb = {
@@ -176,7 +174,7 @@ const TypeFoldout = (props: {typeData: TypeData, ifcModel: IFCModel}) => {
         typeState.get(props.ifcModel.ifcID).set(props.typeData.type, { isVisible: visible, isHighlighted: highlighted, highlightColor: color });
     }
 
-    const toggleHighlight = (e:React.MouseEvent<HTMLElement>)=>{
+    const toggleHighlight = (e:MouseEvent<HTMLElement>)=>{
         setHighlight((oldValue)=>{
             typeState.get(props.ifcModel.ifcID).set(props.typeData.type, { isVisible: visible, isHighlighted: !oldValue, highlightColor: highlightColor });
             return !oldValue
@@ -185,7 +183,7 @@ const TypeFoldout = (props: {typeData: TypeData, ifcModel: IFCModel}) => {
         highlighter.highlightByID(name, highlighted ? {} : props.typeData.fragmentIDMap, true)
     }
 
-    const toggleVisibility = (e:React.MouseEvent<HTMLElement>)=>{
+    const toggleVisibility = (e:MouseEvent<HTMLElement>)=>{
         if(!props.ifcModel.visible)
             return;
         

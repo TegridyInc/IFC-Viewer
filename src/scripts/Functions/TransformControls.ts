@@ -1,11 +1,11 @@
 import * as THREE from 'three'
-import * as Toolbar from '../Viewer/Toolbar'
-import * as Components from '../Viewer/Components'
-import * as FBX from 'three/examples/jsm/loaders/FBXLoader';
+import { toolEnabled, Tools } from '../Viewer/Toolbar'
+import { caster, world } from '../Viewer/Components'
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
 import {IFCGroup, IFCModel} from '../Viewer/IFC'
 
 const modelGroups = new Set<IFCGroup>([]);
-const fbxLoader = new FBX.FBXLoader();
+const fbxLoader = new FBXLoader();
 
 var selectedGroup: IFCGroup;
 var transformControls: THREE.Group;
@@ -27,11 +27,11 @@ document.addEventListener('onViewportLoaded', ()=>{
         if(!selectedGroup)
             return;
 
-        const result = Components.caster.castRay([upControl, leftControl, forwardControl]);
+        const result = caster.castRay([upControl, leftControl, forwardControl]);
         if (!result)
             return;
 
-        Components.world.camera.controls.enabled = false;
+        world.camera.controls.enabled = false;
         var axis = new THREE.Vector3();
         if (result.object == upControl)
             axis.set(0, 1, 0);
@@ -47,7 +47,7 @@ document.addEventListener('onViewportLoaded', ()=>{
         document.addEventListener('mousemove', MoveModel)
 
         document.addEventListener('mouseup', () => {
-            Components.world.camera.controls.enabled = true;
+            world.camera.controls.enabled = true;
             document.removeEventListener('mousemove', MoveModel)
 
             if (!selectedGroup)
@@ -61,9 +61,9 @@ document.addEventListener('onViewportLoaded', ()=>{
 
         function MoveModel(e: MouseEvent) {
             var forward = new THREE.Vector3();
-            Components.world.camera.three.getWorldDirection(forward)
+            world.camera.three.getWorldDirection(forward)
 
-            const yaw = Components.world.camera.three.rotation.z;
+            const yaw = world.camera.three.rotation.z;
 
             const left = new THREE.Vector3();
             left.x = -Math.cos(yaw);
@@ -72,7 +72,7 @@ document.addEventListener('onViewportLoaded', ()=>{
 
             const up = forward.clone().cross(left);
 
-            const distance = Components.world.camera.projection.current == 'Perspective' ? result.distance : (45 / Components.world.camera.threeOrtho.zoom);
+            const distance = world.camera.projection.current == 'Perspective' ? result.distance : (45 / world.camera.threeOrtho.zoom);
             const mouseMovement = new THREE.Vector2(e.movementX * .002 * distance, e.movementY * .002 * distance);
 
             const offsetX = left.x * -mouseMovement.x + (up.x * -mouseMovement.y * (forward.y > 0 ? -1 : 1));
@@ -92,7 +92,7 @@ document.addEventListener('onViewportLoaded', ()=>{
     container.addEventListener('mouseup', (e) => {
         document.removeEventListener('mousemove', CalculateMouseMoveAmount)
 
-        if (e.button != 0 || mouseMoveAmount != 0 || !Toolbar.toolEnabled)
+        if (e.button != 0 || mouseMoveAmount != 0 || !toolEnabled)
             return;
 
         if (moveToolEnabled) {
@@ -103,7 +103,7 @@ document.addEventListener('onViewportLoaded', ()=>{
                 geometries.push(group.boundingBox.boxMesh);
             })
 
-            const result = Components.caster.castRay(geometries);
+            const result = caster.castRay(geometries);
             if (!result)
                 return;
 
@@ -121,7 +121,6 @@ document.addEventListener('onViewportLoaded', ()=>{
             transformControls.visible = true;
             transformControls.position.copy(outline.parent.position);
             selectedGroup = modelGroup;
-            //ifcModel.dispatchEvent({type: 'onModelSelected'})
         }
     })
 
@@ -141,13 +140,13 @@ document.addEventListener('onViewportLoaded', ()=>{
                 forwardControl = mesh;
         })
     
-        Components.world.scene.three.add(model)
+        world.scene.three.add(model)
         model.visible = false;
         transformControls = model;
     });
 
-    Components.world.camera.controls.addEventListener('control', ScaleTransformControls)
-    Components.world.camera.controls.addEventListener('controlend', ScaleTransformControls)
+    world.camera.controls.addEventListener('control', ScaleTransformControls)
+    world.camera.controls.addEventListener('controlend', ScaleTransformControls)
 })
 
 document.addEventListener('onModelAdded', (e: CustomEvent<IFCModel>) => {
@@ -167,9 +166,9 @@ document.addEventListener('onModelRemoved', (e:CustomEvent<IFCModel>)=>{
 })
 
 document.addEventListener('onToolChanged', (e: CustomEvent) => {
-    const tool = e.detail as Toolbar.Tools;
+    const tool = e.detail as Tools;
 
-    if (tool != Toolbar.Tools.Move) {
+    if (tool != Tools.Move) {
         ClearSelection();
         transformControls.visible = false;
         moveToolEnabled = false;
@@ -185,10 +184,10 @@ function CalculateMouseMoveAmount(e: MouseEvent) {
 
 
 function ScaleTransformControls() {
-    if (Components.world.camera.projection.current == 'Orthographic') {
-        transformControls.scale.setScalar(45 / Components.world.camera.threeOrtho.zoom);
+    if (world.camera.projection.current == 'Orthographic') {
+        transformControls.scale.setScalar(45 / world.camera.threeOrtho.zoom);
     } else {
-        var distance = transformControls.position.distanceTo(Components.world.camera.three.position);
+        var distance = transformControls.position.distanceTo(world.camera.three.position);
         transformControls.scale.setScalar(distance + 2);
     }
 }

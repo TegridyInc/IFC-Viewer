@@ -1,20 +1,18 @@
-import { chain, clamp, divide, fill, parseInt, round, xor } from 'lodash';
-import * as DockerUtility from './DockerUtility';
 import { JSX } from 'react/jsx-runtime';
-import * as React from 'react';
+import { useState, useRef, MouseEvent, ReactNode, RefObject, MouseEventHandler, useEffect } from 'react';
 import * as MAT from '@mui/material'
 import { EventDispatcher, Event } from 'three';
 
 //#region Foldout
 
-export const FoldoutComponent = (props: { name: string, inputLabel?: boolean, sx?:MAT.SxProps, children?:JSX.Element[] | JSX.Element, header?:JSX.Element, onOpen?: () => Promise<void>, onClosed?: () => Promise<void> }) => {
-    const [expanded, setExpansion] = React.useState(false);
+export const FoldoutComponent = (props: { name: string, inputLabel?: boolean, sx?:MAT.SxProps, children?:JSX.Element[] | JSX.Element, header?:JSX.Element, onOpen?: () => void, onClosed?: () => void }) => {
+    const [expanded, setExpansion] = useState(false);
    
-    const foldoutExpand = React.useRef(undefined)
-    const foldoutContainer = React.useRef(undefined)
-    const foldoutHeader = React.useRef(undefined)
+    const foldoutExpand = useRef(undefined)
+    const foldoutContainer = useRef(undefined)
+    const foldoutHeader = useRef(undefined)
     
-    const handleExpansion = (e:React.MouseEvent) => {
+    const handleExpansion = (e:MouseEvent) => {
         if(e.target != foldoutHeader.current) 
             return;
             
@@ -147,21 +145,21 @@ export class WindowData extends EventDispatcher<WindowDispatcher> {
 
 export var OnWindowAdded: CustomEvent<WindowData>;
 
-export const WindowComponent = (props: { children?: React.ReactNode[] | React.ReactNode, label: string, root?: React.RefObject<HTMLDivElement>, container?: React.RefObject<HTMLDivElement>, onClose?: React.MouseEventHandler }) => {
-    var rootRef: React.RefObject<HTMLDivElement>;
-    var containerRef: React.RefObject<HTMLDivElement>;
-    const headerRef = React.useRef<HTMLDivElement>(undefined);
-    const labelRef = React.useRef<HTMLDivElement>(undefined);
+export const WindowComponent = (props: { children?: ReactNode[] | ReactNode, label: string, root?: RefObject<HTMLDivElement>, container?: RefObject<HTMLDivElement>, onClose?: MouseEventHandler }) => {
+    var rootRef: RefObject<HTMLDivElement>;
+    var containerRef: RefObject<HTMLDivElement>;
+    const headerRef = useRef<HTMLDivElement>(undefined);
+    const labelRef = useRef<HTMLDivElement>(undefined);
 
-    rootRef = props.root ? props.root : React.useRef(undefined);
-    containerRef = props.container ? props.container : React.useRef(undefined);
+    rootRef = props.root ? props.root : useRef(undefined);
+    containerRef = props.container ? props.container : useRef(undefined);
 
     var windowData: WindowData;
     var xOffset = 0;
     var yOffset = 0;
 
-    const mounted = React.useRef(false);
-    React.useEffect(()=>{
+    const mounted = useRef(false);
+    useEffect(()=>{
         if(!mounted.current) {
             mounted.current = true;
             
@@ -172,7 +170,7 @@ export const WindowComponent = (props: { children?: React.ReactNode[] | React.Re
         }
     }, [])
 
-    const handleWindow = (e: React.MouseEvent<HTMLDivElement>)=>{
+    const handleWindow = (e: MouseEvent<HTMLDivElement>)=>{
         xOffset = rootRef.current.offsetLeft - e.clientX;
         yOffset = rootRef.current.offsetTop - e.clientY;
 
@@ -182,12 +180,12 @@ export const WindowComponent = (props: { children?: React.ReactNode[] | React.Re
         }, {once: true})
     }
         
-    const moveWindowFunc = (e: MouseEvent) => {
+    const moveWindowFunc = (e: any) => {
         rootRef.current.style.top = `${e.clientY + yOffset}px`;
         rootRef.current.style.left = `${e.clientX + xOffset}px`;
     };
     
-    const closeWindow = (e:React.MouseEvent)=>{
+    const closeWindow = (e:MouseEvent)=>{
         rootRef.current.style.visibility = 'hidden' 
         if(props.onClose)
             props.onClose(e)

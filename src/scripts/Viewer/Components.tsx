@@ -1,9 +1,8 @@
 import * as COM from '@thatopen/components'
 import * as OBF from '@thatopen/components-front'
 import * as THREE from 'three'
-import * as React from 'react';
+import { useRef, useEffect } from 'react';
 import { styled } from '@mui/material';
-
 
 const components = new COM.Components();
 export const exporter = components.get(COM.IfcJsonExporter);
@@ -36,14 +35,16 @@ var cameraInput = new THREE.Vector3;
 const Container = styled('div')({
     resize: 'both',
     overflow: 'hidden',
-    minWidth: '200px',
+    minWidth: '300px',
     minHeight: '200px',
+    width: '600px',
+    height: '500px',
 })
 
-export function ContainerComponent() {
-    const mounted = React.useRef(false);
+export default function ContainerComponent() {
+    const mounted = useRef(false);
 
-    React.useEffect(()=>{
+    useEffect(()=>{
         if(!mounted.current) {
             mounted.current = true;
 
@@ -88,7 +89,6 @@ export function ContainerComponent() {
         postproduction = world.renderer.postproduction;
         postproduction.enabled = true;
         postproduction.customEffects.excludedMeshes.push(grid.three);
-        //postproduction.customEffects.glossEnabled = true;
         postproduction.setPasses({gamma: false});
         postproduction.setPasses({custom: false});
         
