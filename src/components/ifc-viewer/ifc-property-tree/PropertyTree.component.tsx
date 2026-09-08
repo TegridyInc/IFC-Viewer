@@ -1,11 +1,16 @@
 import * as THREE from 'three'
 import * as FRA from '@thatopen/fragments'
 import { useState, useRef, useEffect, ChangeEvent, MouseEvent } from 'react'
-import { highlighter, culler, fragmentHider } from '../Viewer/Components'
-import { WindowComponent, FoldoutComponent, ToggleButton, ColorInput } from '../Utility/UIUtility.component'
-import { ModelFoldouts } from '../Utility/IFCUtility'
-import { IFCDispatcher, IFCModel } from '../Viewer/IFC'
+import { highlighter, culler, fragmentHider } from '../Components'
+import { ToggleButton } from '../inputs/Buttons'
+import ColorInput from '../inputs/Color'
+import Window from '@pim_platform/components/ifc-viewer/window/Window.component'
+
+import { EventType, useModels } from '../ifc-model/ModelProvider.component'
+import { ModelFoldouts } from '../ifc-model/IFCUtility'
+import { IFCDispatcher, IFCModel } from '../ifc-model/IFC'
 import { Stack, Tooltip } from '@mui/material'
+import Foldout from '../foldout/Foldout.component'
       
 interface TypeData {
     data: { [attibute: string]: any }[];
@@ -16,8 +21,10 @@ interface TypeData {
 
 const typeState = new Map<number, Map<number, { isVisible: boolean, isHighlighted: boolean, highlightColor: THREE.Color }>>();
 
-export default function PropertyTree() {
-    const [ifcModel, setIFCModel] = useState<IFCModel>();
+export const PropertyTreeComponent = () => {
+    const [ifcModel, setIFCModel] = useState<IFCModel>(undefined);
+
+    const { addEventListener } = useModels()
 
     const propertyTreeRoot = useRef<HTMLDivElement>(undefined);
     const propertyTreeContainer = useRef<HTMLDivElement>(undefined);
@@ -28,31 +35,27 @@ export default function PropertyTree() {
         if(!mounted.current) {
             mounted.current = true;
             
-            document.addEventListener('onModelAdded', (e: CustomEvent<IFCModel>) => {
-                e.detail.dispatcher.addEventListener('onPropertyTree', OpenPropertyTree)
-            })
+            addEventListener(EventType.PropertyTreeOpened, OpenPropertyTree)
+            addEventListener(EventType.ModelRemoved, (model) => {
+                setIFCModel(ifcModel => ifcModel === undefined || ifcModel.id === model.id ? undefined : ifcModel)
 
-            document.addEventListener('onModelRemoved', (e: CustomEvent<IFCModel>) =>{
-                setIFCModel(oldIFCModel => oldIFCModel == e.detail ? undefined : oldIFCModel)
-                
-                typeState.delete(e.detail.ifcID);
-                e.detail.dispatcher.removeEventListener('onPropertyTree', OpenPropertyTree)
+                typeState.delete(model.ifcID)
             })
         }
     }, []);
 
     return(
-        <WindowComponent label='Property Tree' root={propertyTreeRoot} container={propertyTreeContainer} >
+        <Window label='Property Tree' root={propertyTreeRoot} container={propertyTreeContainer} >
             <TypeFoldouts ifcModel={ifcModel}></TypeFoldouts>
-        </WindowComponent>
+        </Window>
     )
 
-    function OpenPropertyTree(event: { target: IFCDispatcher}) {
-        if(ifcModel == event.target.ifc) {
+    function OpenPropertyTree(model: IFCModel) {
+        if(ifcModel === model) {
             return;
         }
     
-        setIFCModel(event.target.ifc)
+        setIFCModel(model)
 
         if(propertyTreeContainer.current.parentElement == propertyTreeRoot.current) {
             propertyTreeRoot.current.style.visibility = 'visible';
@@ -60,34 +63,36 @@ export default function PropertyTree() {
     }
 } 
 
-function TypeFoldouts(props: { ifcModel: IFCModel }) {
+const TypeFoldouts = (props: { ifcModel: IFCModel }) => {
     const [items, setItems] = useState([]);
 
     const mounted = useRef(false);
-
     useEffect(()=>{
         if(!mounted.current) {
             mounted.current = true;
             
             document.addEventListener('onModelAdded', (e: CustomEvent<IFCModel>) => {
                 typeState.set(e.detail.ifcID, new Map<number, { isVisible: boolean, isHighlighted: boolean, highlightColor: THREE.Color }>());
-                e.detail.dispatcher.addEventListener('onPropertyTree', UpdateItems)
             })
         }
     }, []);
 
-    if (!props.ifcModel)
-        return <></>;
+    useEffect(() => {
+        UpdateItems();
+    }, [props.ifcModel])
 
-    async function UpdateItems(event: { target: IFCDispatcher}) {
+    async function UpdateItems() {
+        if(!props.ifcModel)
+            return
+
         for (const selection in highlighter.selection) {
             if (selection != 'hover' && selection != 'select')
                 highlighter.remove(selection)
         }
-    
+
         setItems([])
 
-        const ifcModel = event.target.ifc;
+        const ifcModel = props.ifcModel;
 
         var types: TypeData[] = [];
         var idsFound = new Set<number>();
@@ -99,7 +104,7 @@ function TypeFoldouts(props: { ifcModel: IFCModel }) {
             for (const id of child.fragment.ids) { 
                 const properties = await webIFC.properties.getItemProperties(ifcModel.ifcID, id);
                 const index = types.findIndex(value => value.type == properties.type)
-    
+
                 if(index == -1) {
                     types.push({ data: [properties], objects: new Set<FRA.FragmentMesh>([child]), fragmentIDMap: null, type: properties.type });
                     if(typeState.get(ifcModel.ifcID).get(properties.type) == undefined) 
@@ -110,7 +115,7 @@ function TypeFoldouts(props: { ifcModel: IFCModel }) {
                     }
                     types[index].objects.add(child)
                 } 
-    
+
                 idsFound.add(id)
             }
         }
@@ -130,8 +135,11 @@ function TypeFoldouts(props: { ifcModel: IFCModel }) {
         }))
     }
 
+    if (!props.ifcModel)
+        return <></>;
+
     return (
-        <Stack spacing={1}>
+        <Stack spacing={.5}>
             {items}
         </Stack>
     )
@@ -214,8 +222,8 @@ const TypeFoldout = (props: {typeData: TypeData, ifcModel: IFCModel}) => {
     }
 
     return (
-        <FoldoutComponent sx={{border: '1px solid', borderColor: 'secondary.light'}} onClosed={async ()=> {setOpenState(false)}} onOpen={async ()=> {setOpenState(true)}} key={name} name={name} header={
-            <Stack sx={{marginLeft: 'auto', alignItems: 'center', marginRight: '5px'}} spacing={.5} direction={'row'}>
+        <Foldout sx={{border: '1px solid', borderColor: 'secondary.light'}} onClosed={async ()=> {setOpenState(false)}} onOpen={async ()=> {setOpenState(true)}} key={name} addRightPadding label={name} header={
+            <Stack sx={{marginLeft: 'auto', alignItems: 'center'}} spacing={.5} direction={'row'}>
                 <Tooltip title='Highlight Color'>
                     <ColorInput type="color" className='color-input' defaultValue={'#'+highlightColor.getHexString()} onChange={changeHighlightColor}/>
                 </Tooltip>
@@ -228,9 +236,8 @@ const TypeFoldout = (props: {typeData: TypeData, ifcModel: IFCModel}) => {
             </Stack>
         }>
             {isOpen ? objectsProperties : <></>}
-        </FoldoutComponent>
+        </Foldout>
     )
 }
 
-
-
+export default PropertyTreeComponent;

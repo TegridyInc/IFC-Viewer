@@ -1,6 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
-import {FoldoutComponent, WindowComponent, FoldoutElementComponent} from '../Utility/UIUtility.component'
-import {IFCDispatcher, IFCModel } from '../Viewer/IFC'
+import Window from '@pim_platform/components/ifc-viewer/window/Window.component'
+import Foldout from '../foldout/Foldout.component'
+import FoldoutElement from '../foldout/FoldoutElement.component';
+
+import {IFCDispatcher, IFCModel } from '../ifc-model/IFC'
+import { EventType, useModels } from '../ifc-model/ModelProvider.component'
 
 var openModel: IFCModel;
 
@@ -14,17 +18,17 @@ const SpatialStructureElement = (props: {element: any}) => {
         })
 
         return (
-            <FoldoutComponent 
-                name={props.element.type} 
+            <Foldout 
+                label={props.element.type} 
                 header={ <div style={{paddingLeft: '5px'}}>{props.element.Name ? props.element.Name.value : ''}</div>} 
                 onOpen={async () => { setIsOpen(true) }} 
                 onClosed={async () => { setIsOpen(false) }}
             >
                 {isOpen ? elements : <></>}
-            </FoldoutComponent>
+            </Foldout>
         )
     } else {
-        return <FoldoutElementComponent label={props.element.Name.value + ` (${props.element.type})`}/>
+        return <FoldoutElement label={props.element.Name.value + ` (${props.element.type})`}/>
     }
 }
 
@@ -32,16 +36,17 @@ export default function SpatialStructure() {
     const rootRef = useRef<HTMLDivElement>(undefined);
     const containerRef = useRef<HTMLDivElement>(undefined);
     const [spatialStructure, setSpatialStructure] = useState(undefined);
+    const { addEventListener } = useModels()
 
-    const getSpatialStructure = async (event: {target: IFCDispatcher}) => {
+    const getSpatialStructure = async (model: IFCModel) => {
         if(containerRef.current.parentElement == rootRef.current) 
             rootRef.current.style.visibility = 'visible';
 
-        if(openModel == event.target.ifc)
+        if(openModel == model)
             return;
         
-        const id = event.target.ifc.ifcID;
-        openModel = event.target.ifc;
+        const id = model.ifcID;
+        openModel = model;
     
         const spatialStructure = await webIFC.properties.getSpatialStructure(id, true);
         const ifcProject = await webIFC.properties.getItemProperties(id, spatialStructure.expressID);
@@ -51,9 +56,9 @@ export default function SpatialStructure() {
         })
 
         setSpatialStructure(
-            <FoldoutComponent sx={{border: '1px solid', borderColor: 'secondary.light'}} name={spatialStructure.type} header={<div style={{paddingLeft: '5px'}}>{ifcProject.Name.value}</div>}>
+            <Foldout addRightPadding sx={{border: '1px solid', borderColor: 'secondary.light'}} label={spatialStructure.type} header={<div style={{paddingLeft: '5px'}}>{ifcProject.Name.value}</div>}>
                 {elements}
-            </FoldoutComponent>
+            </Foldout>
         )
     }
 
@@ -62,13 +67,13 @@ export default function SpatialStructure() {
         if(!mounted.current) {
             mounted.current = true;
             
-            document.addEventListener('onModelAdded', (e:CustomEvent<IFCModel>) => e.detail.dispatcher.addEventListener('onSpatialStructure', getSpatialStructure))
+            addEventListener(EventType.SpatialStructureOpened, getSpatialStructure)
         }
     }, [])
 
     return (
-        <WindowComponent label='Spatial Structure' root={rootRef} container={containerRef}>
+        <Window label='Spatial Structure' root={rootRef} container={containerRef}>
             {spatialStructure}
-        </WindowComponent>
+        </Window>
     )
 }

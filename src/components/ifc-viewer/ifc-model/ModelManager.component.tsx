@@ -1,13 +1,18 @@
 import * as FRA from '@thatopen/fragments'
-import { world, fragmentManager, worlds } from '../Viewer/Components'
-import {IconButton, WindowComponent, ToggleButton, FoldoutComponent, FoldoutElementComponent} from '../Utility/UIUtility.component';
-import { LoadIFCModel } from '../Viewer/IFCLoader' 
-import {IFCGroup, IFCModel} from '../Viewer/IFC'
+import { world, fragmentManager, worlds } from '../Components'
+import {IconButton, ToggleButton} from '../inputs/Buttons';
+import { LoadIFCModel } from './IFCLoader' 
+import {IFCGroup, IFCModel} from './IFC'
 import { useRef, useState, FormEvent, useEffect, MouseEvent } from 'react';
 import { JSX } from 'react/jsx-runtime';
 import { styled, Stack, Tooltip } from '@mui/material'
+import Foldout from '@pim_platform/components/ifc-viewer/foldout/Foldout.component'
+import FoldoutElement from '@pim_platform/components/ifc-viewer/foldout/FoldoutElement.component'
 
-const ModelManager = styled(WindowComponent)({
+import Window from '@pim_platform/components/ifc-viewer/window/Window.component'
+import { EventType, useModels } from './ModelProvider.component';
+
+const ModelManager = styled(Window)({
     alignContent: 'center',
     paddingLeft: '5px'
 })
@@ -15,87 +20,14 @@ const ModelManager = styled(WindowComponent)({
 const ModelManagerComponent = () => {
     const rootRef = useRef<HTMLDivElement>(undefined);
     const containerRef = useRef<HTMLDivElement>(undefined);
-    const [items, setItems] = useState<JSX.Element[]>([]);
-
-    const addModel = (e:CustomEvent<IFCModel>) => {   
-        groupStates.set(e.detail.group.uuid, [true]);
-        e.detail.visible = e.detail.group.visible;
-        e.detail.dispatcher.dispatchEvent({type: 'onVisibilityChanged', isVisible: e.detail.visible})
-
-        setItems((oldItems)=>{
-            var index = oldItems.findIndex((v) => v.props.group.uuid == e.detail.group.uuid)
-        
-            if(index != -1) {                    
-                return oldItems.map((v, i) =>{
-                    if(i != index)
-                        return v;
-                    else {
-                        const children = v.props.children as any[];
-                        const index = children.findIndex((v)=> v.props.ifcModel.ifcID == e.detail.ifcID)
-                        
-                        if(index == -1)
-                            children.push( <ModelItemComponent ifcModel={e.detail}></ModelItemComponent> );
-                        
-                        return <ModelGroupComponent group={e.detail.group}>{children}</ModelGroupComponent>
-                    }
-                })
-            } else {
-                return [...oldItems, 
-                    <ModelGroupComponent group={e.detail.group}>
-                        {[<ModelItemComponent ifcModel={e.detail}></ModelItemComponent>]}
-                    </ModelGroupComponent>
-                ]
-            }
-        })
-    }
-
-    const removeModel = (e:CustomEvent<IFCModel>) => {
-        if(e.detail.group.children.length == 3) {
-            e.detail.group.clear();
-            world.scene.three.remove(e.detail.group);
-        } 
-
-        const index = e.detail.group.ifcModels.findIndex((v)=>v.ifcID == e.detail.ifcID)
-        if(index != -1) {
-            e.detail.group.ifcModels.splice(index, 1)
-        }
-        e.detail.group.remove(e.detail);
-        
-        if(e.detail.group.ifcModels.length > 0)
-            e.detail.group.recaculateBoundingBox();
-
-        setItems((oldItems)=>{
-            var index = oldItems.findIndex((v) => v.props.group.uuid == e.detail.group.uuid)
-
-            if(!oldItems[index].props.children.length || oldItems[index].props.children.length == 1) {
-                groupStates.delete(e.detail.group.uuid)
-                return oldItems.filter((v, i) => i != index)
-            } else {
-                const children = oldItems[index].props.children;
-                const newChildren = children.filter((value:any, index:number) => {
-                    groupStates.get(e.detail.group.uuid).filter((v, i) => i != index) 
-                    return value.props.ifcModel.ifcID != e.detail.ifcID.toString()
-                })
-
-                return oldItems.map((v, i) => {
-                    if(i != index)
-                        return v;
-                    else {
-                        return <ModelGroupComponent group={e.detail.group}>{newChildren}</ModelGroupComponent>;
-                    }
-                })
-            }
-        })
-    }
+   
+    const { models } = useModels()
 
     const mounted = useRef(false);
     useEffect(()=>{
         if(!mounted.current) {
             mounted.current = true;
-            
-            document.addEventListener('onModelAdded', addModel)
-            document.addEventListener('onModelRemoved', removeModel)
-            
+
             document.getElementById('open-model-manager').addEventListener('click', ()=>{
                 if(containerRef.current.parentElement == rootRef.current) 
                     rootRef.current.style.visibility = 'visible';
@@ -106,11 +38,11 @@ const ModelManagerComponent = () => {
     return (
         <ModelManager label='Model Manager' root={rootRef} container={containerRef}>
             {
-                items.length != 0 ?
                 <Stack spacing={1}>
-                    {items} 
+                    {
+                        models.map(model => <ModelItemComponent ifcModel={model}/>)
+                    } 
                 </Stack> 
-                : <></>
             }
         </ModelManager>
     )
@@ -120,14 +52,15 @@ export default ModelManagerComponent;
 
 const ModelItemComponent = (props: {ifcModel: IFCModel})=>{
     const ifcModel = props.ifcModel;
-    const model = ifcModel;
 
     const [visible, setVisibilty] = useState(true);
     const [generalIFCData, setGeneralIFCData] = useState(undefined);
 
-    const openSpatialStructure = () => ifcModel.dispatcher.dispatchEvent({type: 'onSpatialStructure'})
+    const { removeModel, invokeEvent } = useModels()
 
-    const openPropertyTree = ()=> ifcModel.dispatcher.dispatchEvent({type: 'onPropertyTree'}) 
+    const openSpatialStructure = () => invokeEvent(EventType.SpatialStructureOpened, ifcModel)
+
+    const openPropertyTree = ()=> invokeEvent(EventType.PropertyTreeOpened, ifcModel)
 
     const toggleVisibility = (e:MouseEvent<HTMLElement>)=>{
         if(!props.ifcModel.group.visible)
@@ -137,26 +70,25 @@ const ModelItemComponent = (props: {ifcModel: IFCModel})=>{
         const button = e.target as HTMLElement;
         button.innerHTML = !visible ? 'visibility' : 'visibility_off'; 
 
-        props.ifcModel.visible = !visible;
-        ifcModel.dispatcher.dispatchEvent({type: 'onVisibilityChanged', isVisible: !visible});
+        ifcModel.visible = !visible;
+        invokeEvent(EventType.VisibilityChanged, ifcModel)
     }
 
-    const openPlans = ()=> ifcModel.dispatcher.dispatchEvent({type: 'onPlans'}) 
+    const openPlans = () => invokeEvent(EventType.PlansOpened, ifcModel)
 
-    const deleteModel = ()=>{
-        globalThis.onModelRemoved = new CustomEvent<IFCModel>('onModelRemoved', { detail: ifcModel });
-        document.dispatchEvent(global.onModelRemoved);
-        
+    const deleteModel = ()=>{        
         webIFC.CloseModel(ifcModel.ifcID);
 
-        world.scene.three.remove(model)
+        world.scene.three.remove(ifcModel)
         fragmentManager.disposeGroup(ifcModel);
         ifcModel.children.forEach(child=> {
             if(child instanceof FRA.FragmentMesh)
                 world.meshes.delete(child);
         })
 
-        model.dispose();
+        ifcModel.dispose();
+
+        removeModel(ifcModel)
     }
 
     const getGeneralIFCData = async () => {
@@ -170,11 +102,11 @@ const ModelItemComponent = (props: {ifcModel: IFCModel})=>{
         }
 
         elements.push(
-            <FoldoutComponent name='Application'>
-                <FoldoutElementComponent label='Name' value={applicationData.ApplicationFullName.value}/>
-                <FoldoutElementComponent label='Identifier' value={applicationData.ApplicationIdentifier.value}/>
-                <FoldoutElementComponent label='Version' value={applicationData.Version.value}/>
-            </FoldoutComponent>
+            <Foldout label='Application'>
+                <FoldoutElement label='Name' value={applicationData.ApplicationFullName.value}/>
+                <FoldoutElement label='Identifier' value={applicationData.ApplicationIdentifier.value}/>
+                <FoldoutElement label='Version' value={applicationData.Version.value}/>
+            </Foldout>
         )
 
         const organizationElements: any[] = [];
@@ -183,16 +115,16 @@ const ModelItemComponent = (props: {ifcModel: IFCModel})=>{
             const organizationData = organizationDatas[id];
 
             organizationElements.push(
-                <FoldoutComponent name={organizationData.Name.value}>
-                    <FoldoutElementComponent label='Description' value={organizationData.Description != null ? organizationData.Description.value : ''}/>
-                </FoldoutComponent>
+                <Foldout label={organizationData.Name.value}>
+                    <FoldoutElement label='Description' value={organizationData.Description != null ? organizationData.Description.value : ''}/>
+                </Foldout>
             )
         }
         
         elements.push(
-            <FoldoutComponent name='Organizations'>
+            <Foldout label='Organizations'>
                 {organizationElements}
-            </FoldoutComponent>
+            </Foldout>
         )
 
         const classificationElements: any[] = [];
@@ -201,17 +133,17 @@ const ModelItemComponent = (props: {ifcModel: IFCModel})=>{
         for(const id in classificationsData) {
             const classificationData = classificationsData[id] as any;
             classificationElements.push(
-                <FoldoutComponent name={classificationData.Name.value}>
-                    <FoldoutElementComponent label='Edition' value={classificationData.Edition.value}/>
-                    <FoldoutElementComponent label='Source' value={classificationData.Source.value}/>
-                </FoldoutComponent>
+                <Foldout label={classificationData.Name.value}>
+                    <FoldoutElement label='Edition' value={classificationData.Edition.value}/>
+                    <FoldoutElement label='Source' value={classificationData.Source.value}/>
+                </Foldout>
             )
         }
 
         elements.push(
-            <FoldoutComponent name='Classifications'>
+            <Foldout label='Classifications'>
                 {classificationElements}
-            </FoldoutComponent>
+            </Foldout>
         )
         
         setGeneralIFCData(elements);
@@ -227,7 +159,7 @@ const ModelItemComponent = (props: {ifcModel: IFCModel})=>{
     }, [])
 
     return(
-        <FoldoutComponent name={ifcModel.name} key={props.ifcModel.ifcID} header={
+        <Foldout label={ifcModel.name} key={props.ifcModel.ifcID} header={
             <Stack sx={{alignItems: 'center'}} spacing={.5} direction={'row'}>
                 <Tooltip title='Spatial Structure'>
                     <IconButton onClick={openSpatialStructure}>package_2</IconButton>
@@ -246,12 +178,12 @@ const ModelItemComponent = (props: {ifcModel: IFCModel})=>{
                 </Tooltip>
             </Stack>
         }>  
-            <FoldoutComponent name='General'>
-                <FoldoutElementComponent label='Description' value={props.ifcModel.ifcMetadata.description}/>
-                <FoldoutElementComponent label='Schema' value={props.ifcModel.ifcMetadata.schema}/>
-            </FoldoutComponent>
+            <Foldout label='General'>
+                <FoldoutElement label='Description' value={props.ifcModel.ifcMetadata.description}/>
+                <FoldoutElement label='Schema' value={props.ifcModel.ifcMetadata.schema}/>
+            </Foldout>
             {generalIFCData}
-        </FoldoutComponent>
+        </Foldout>
     )
 }
 
@@ -259,6 +191,7 @@ const groupStates = new Map<string, boolean[]>();
 
 const ModelGroupComponent = (props: {children: JSX.Element|JSX.Element[], group: IFCGroup}) => {
     const [visible, setVisibilty] = useState(true);
+    const { invokeEvent } = useModels()
 
     const addModelToGroup = (e: FormEvent<HTMLInputElement>, group:IFCGroup)=>{
         const file = e.currentTarget.files[0];
@@ -269,8 +202,7 @@ const ModelGroupComponent = (props: {children: JSX.Element|JSX.Element[], group:
         reader.onload = () => {
             groupStates.set(group.uuid, [...groupStates.get(group.uuid), true])
             
-            const data = new Uint8Array(reader.result as ArrayBuffer);
-            LoadIFCModel(data, file.name.split(".ifc")[0], false, group);
+            LoadIFCModel(reader.result as ArrayBuffer, file.name.split(".ifc")[0], false, group);
         }
 
         reader.readAsArrayBuffer(file);
@@ -284,7 +216,7 @@ const ModelGroupComponent = (props: {children: JSX.Element|JSX.Element[], group:
             const states = groupStates.get(props.group.uuid);
             props.group.ifcModels.forEach((ifcModel, i) => {
                 ifcModel.visible = states[i];
-                ifcModel.dispatcher.dispatchEvent({type: 'onVisibilityChanged', isVisible: true});
+                invokeEvent(EventType.VisibilityChanged, ifcModel)
             })
         } else {
             groupStates.set(props.group.uuid, props.group.ifcModels.map(ifcModel => {
@@ -293,7 +225,7 @@ const ModelGroupComponent = (props: {children: JSX.Element|JSX.Element[], group:
 
             props.group.ifcModels.forEach(ifcModel => {
                 ifcModel.visible = false;
-                ifcModel.dispatcher.dispatchEvent({type: 'onVisibilityChanged', isVisible: false});
+                invokeEvent(EventType.VisibilityChanged, ifcModel)
             })
         }
 
@@ -305,7 +237,7 @@ const ModelGroupComponent = (props: {children: JSX.Element|JSX.Element[], group:
     }
 
     return (
-        <FoldoutComponent sx={{border: '1px solid', borderColor: 'secondary.light'}} name='New Group' inputLabel key={props.group.uuid} header={
+        <Foldout sx={{border: '1px solid', borderColor: 'secondary.light'}} addRightPadding label='New Group' inputLabel key={props.group.uuid} header={
                 <Stack sx={{alignItems: 'center'}} spacing={.5} direction={'row'}>
                     <Tooltip title='Toggle Group Visibility'>
                         <ToggleButton value={visible} selected={visible} onClick={toggleVisibility}>
@@ -328,6 +260,6 @@ const ModelGroupComponent = (props: {children: JSX.Element|JSX.Element[], group:
                 </Stack>
             }> 
                 {props.children}
-        </FoldoutComponent>
+        </Foldout>
     )
 }

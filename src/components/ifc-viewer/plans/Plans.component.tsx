@@ -1,14 +1,15 @@
-import { DisableCustomView, EnableCustomView } from '../Viewer/Viewer'
-import { plans, highlighter, classifier, edges, world, fragmentManager, grid } from '../Viewer/Components'
-import { DisableTool, EnableTool } from '../Viewer/Toolbar'
-import { Notification } from '../Viewer/Notifications'
-import { BigButton, WindowComponent } from '../Utility/UIUtility.component'
-import { IFCDispatcher, IFCModel } from '../Viewer/IFC'
+import { DisableCustomView, EnableCustomView } from '../Viewer'
+import { plans, highlighter, classifier, edges, world, fragmentManager, grid } from '../Components'
+import { DisableTool, EnableTool } from '../Toolbar'
+import { Notification } from '../notification/Notifications.component'
+import { BigButton } from '../inputs/Buttons'
+import Window from '@pim_platform/components/ifc-viewer/window/Window.component'
+import { IFCDispatcher, IFCModel } from '@pim_platform/components/ifc-viewer/ifc-model/IFC'
+import { EventType, useModels } from '../ifc-model/ModelProvider.component'
 import { useState, useRef, useEffect } from 'react'
 import { Stack } from '@mui/material'
 import * as THREE from 'three'
 
-var modelOpen: IFCModel;
 
 const grayFill = new THREE.MeshBasicMaterial({ color: "gray", side: 2 });
 const blackLine = new THREE.LineBasicMaterial({ color: "black" });
@@ -19,8 +20,12 @@ const blackOutline = new THREE.MeshBasicMaterial({
   transparent: true,
 });
 
-export default function Plans() {
+export const PlansComponent = () => {
     const [plansList, setPlans] = useState([]);
+
+    const { addEventListener } = useModels()
+
+    const [currentModel, setCurrentModel] = useState<IFCModel>(undefined);
 
     const plansRootRef = useRef<HTMLDivElement>(undefined);
     const plansContainerRef = useRef<HTMLDivElement>(undefined);
@@ -30,35 +35,25 @@ export default function Plans() {
         if (!mounted.current) {
             mounted.current = true;
 
-            document.addEventListener('onModelAdded', (e: CustomEvent<IFCModel>) => {
-                const ifcModel = e.detail;
-
-                ifcModel.dispatcher.addEventListener('onPlans', OpenPlans)
+            addEventListener(EventType.PlansOpened, (model) => {
+                if(currentModel != model)
+                    setCurrentModel(model)
             })
-
-            document.addEventListener('onModelRemoved', (e: CustomEvent<IFCModel>) => {
-                const ifcModel = e.detail;
-                if (ifcModel == modelOpen) {
-                    setPlans([])
+            addEventListener(EventType.ModelRemoved, (model) => {
+                if(model == currentModel) {
+                    setCurrentModel(undefined)
                 }
-
-                ifcModel.dispatcher.removeEventListener('onPlans', OpenPlans)
             })
         }
     }, [])
 
-    async function OpenPlans(event: { target: IFCDispatcher }) {
-        if (event.target.ifc == modelOpen)
-            return;
-
+    async function OpenPlans() {
         if(plansContainerRef.current.parentElement == plansRootRef.current) 
             plansRootRef.current.style.visibility = 'visible';
         
-        const ifcModel = event.target.ifc;
-
         plans.list = [];
         try {
-            await plans.generate(ifcModel);
+            await plans.generate(currentModel);
         } catch {
             new Notification('No Plans Found', 'warning')
             return;
@@ -68,7 +63,7 @@ export default function Plans() {
             return;
         
         setPlans([]);
-        modelOpen = ifcModel;
+        setCurrentModel(currentModel)
         const planViewButtons = plans.list.map(planView => {
             return (
                 <BigButton onClick={() => { plans.goTo(planView.id) }}>{planView.name}</BigButton>
@@ -76,11 +71,11 @@ export default function Plans() {
         })
         setPlans(planViewButtons);
         
-        classifier.byModel(ifcModel.uuid, ifcModel);
-        classifier.byEntity(ifcModel);
+        classifier.byModel(currentModel.uuid, currentModel);
+        classifier.byEntity(currentModel);
         
         const white = new THREE.Color(1,1,1);
-        const modelItems = classifier.find({ models: [ifcModel.uuid] });
+        const modelItems = classifier.find({ models: [currentModel.uuid] });
         classifier.setColor(modelItems, white)
         world.scene.three.background = white;
         highlighter.backupColor = white;
@@ -102,7 +97,6 @@ export default function Plans() {
             blackOutline,
         );
 
-        
         for (const fragID in thickItems) {
             const foundFrag = fragmentManager.list.get(fragID);
             if (!foundFrag) continue;
@@ -141,26 +135,42 @@ export default function Plans() {
     async function ExitPlans() {
         highlighter.clear();
         highlighter.enabled = false;
+
         plans.exitPlanView(false)
+
         EnableTool();
         DisableCustomView();
         
         highlighter.backupColor = null;
-        classifier.resetColor(modelOpen.getFragmentMap());
-        world.scene.three.background = new THREE.Color(.05, .05, .05);
+
+        if(currentModel) {
+            classifier.resetColor(currentModel.getFragmentMap());
+            setCurrentModel(undefined)
+        }
         
-        modelOpen = null;
+        world.scene.three.background = new THREE.Color(.05, .05, .05);
     }
 
+    useEffect(()=> {
+        if(currentModel == undefined) {
+            setPlans([])
+            return
+        }
+
+        OpenPlans()
+    }, [currentModel])
+
+
     return (
-        <WindowComponent label='Plans' root={plansRootRef} container={plansContainerRef} onClose={ExitPlans}>
+        <Window label='Plans' root={plansRootRef} container={plansContainerRef} onClose={ExitPlans}>
             {plansList.length != 0 ?
                 <Stack spacing={.5}>
                     {plansList}
                 </Stack>
                 : <></>
             }
-        </WindowComponent>
+        </Window>
     )
 }
 
+export default PlansComponent;
