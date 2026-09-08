@@ -1,6 +1,6 @@
 import * as FRA from '@thatopen/fragments';
 import { IFCBUILDINGSTOREY } from 'web-ifc'
-import { ifcloader, indexer, classifier, world } from './Components';
+import { ifcloader, indexer, classifier, world } from '../Components';
 import {IFCModel, IFCGroup, IFCDispatcher} from './IFC'
 
 export async function LoadIFCModelUsingURL(url: string): Promise<FRA.FragmentsGroup> {
@@ -13,7 +13,7 @@ export async function LoadIFCModel(arrayBuffer: ArrayBuffer, name: string, focus
     const data = new Uint8Array(arrayBuffer);
     const ifcID = webIFC.OpenModel(data);
     const model = await ifcloader.load(data);
-    
+
     const ifcModel = model as IFCModel;
     ifcModel.dispatcher = new IFCDispatcher();
     ifcModel.dispatcher.ifc = ifcModel;
@@ -45,7 +45,7 @@ export async function LoadIFCModel(arrayBuffer: ArrayBuffer, name: string, focus
     globalThis.onModelAdded = new CustomEvent<IFCModel>('onModelAdded', { detail: ifcModel });
     document.dispatchEvent(globalThis.onModelAdded)
 
-    return model;
+    return ifcModel;
 }
 
 function CreateModelGroup(): IFCGroup {

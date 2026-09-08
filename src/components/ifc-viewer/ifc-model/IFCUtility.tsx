@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import Foldout from './foldout/Foldout.component';
-import FoldoutElement from './foldout/FoldoutElement.component';
+import Foldout from '../foldout/Foldout.component';
+import FoldoutElement from '../foldout/FoldoutElement.component';
 import { IFCModel } from './IFC'
 import { JSX } from 'react/jsx-runtime';
 import { SxProps } from '@mui/material';

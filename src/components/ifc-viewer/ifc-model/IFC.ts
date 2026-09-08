@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import {FragmentsGroup} from '@thatopen/fragments'
-import {boundingBoxer} from '../../components/ifc-viewer/Components'
+import {boundingBoxer} from '../Components'
 
 export interface BoundingBoxData {
     outline: THREE.BoxHelper;
@@ -88,9 +88,6 @@ export class IFCDispatcher extends THREE.EventDispatcher<IFCModel> {
 
 export class IFCModel extends FragmentsGroup {
     onVisibilityChanged:{ isVisible: boolean }
-    onPlans: {}
-    onPropertyTree:{}
-    onSpatialStructure:{}
 
     onModelMoveStart:{}
     onModelMove:{}

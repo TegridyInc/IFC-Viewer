@@ -1,6 +1,6 @@
 import { highlighter } from '../Components'
-import { ModelFoldouts } from '../IFCUtility'
-import { IFCModel }  from '@pim_platform/components/ifc-viewer/IFC'
+import { ModelFoldouts } from '../ifc-model/IFCUtility'
+import { IFCModel }  from '@pim_platform/components/ifc-viewer/ifc-model/IFC'
 import { Stack } from '@mui/material'
 import Window from '@pim_platform/components/ifc-viewer/window/Window.component'
 import { useRef, useState, useEffect } from 'react'

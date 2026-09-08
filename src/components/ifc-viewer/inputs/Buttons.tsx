@@ -28,7 +28,7 @@ export const IconButton = styled(Button, {target: 'material-symbols-outlined'})(
     backgroundColor: theme.palette.primary.main,
 
     '&:hover': {
-        backgroundColor: theme.palette.secondary.light
+        backgroundColor: theme.palette.primary.light
     }
 }))
 
@@ -37,7 +37,7 @@ export const BigButton = styled(Button)(({theme})=> ({
     width: 'calc(100% - 10px)',
     height: '20px',
     padding: '5px',
-    backgroundColor: theme.palette.secondary.main,
+    backgroundColor: theme.palette.primary.main,
     boxSizing: 'content-box',
     minWidth: 0,
 

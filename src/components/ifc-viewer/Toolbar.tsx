@@ -1,8 +1,9 @@
 import { exploder, culler, highlighter, clipper } from './Components'
-import { LoadIFCModel } from './IFCLoader'
+import { LoadIFCModel } from './ifc-model/IFCLoader'
 import { styled, Stack, Divider, ToggleButtonGroup, Tooltip } from '@mui/material';
 import { IconButton, ToggleButton } from './inputs/Buttons'
 import { useRef, useState, useEffect, ChangeEvent, MouseEvent } from 'react';
+import { useModels } from './ifc-model/ModelProvider.component'
 
 export enum Tools {
     Select,
@@ -56,6 +57,7 @@ export default function Toolbar() {
 
     const [tool, setTool] = useState(0)
     const [exploded, setExploded] = useState(false);
+    const { addModel } = useModels()
 
     const mounted = useRef(false)
     useEffect(()=>{
@@ -73,8 +75,9 @@ export default function Toolbar() {
             return;
 
         const reader = new FileReader();
-        reader.onload = () => {
-            LoadIFCModel(reader.result as ArrayBuffer, file.name.split(".ifc")[0]);
+        reader.onload = async () => {
+            const ifcModel = await LoadIFCModel(reader.result as ArrayBuffer, file.name.split(".ifc")[0]);
+            addModel(ifcModel)
         }
 
         reader.readAsArrayBuffer(file);

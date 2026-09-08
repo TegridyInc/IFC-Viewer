@@ -1,8 +1,8 @@
 import * as FRA from '@thatopen/fragments'
 import { world, fragmentManager, worlds } from '../Components'
 import {IconButton, ToggleButton} from '../inputs/Buttons';
-import { LoadIFCModel } from '../IFCLoader' 
-import {IFCGroup, IFCModel} from '../IFC'
+import { LoadIFCModel } from './IFCLoader' 
+import {IFCGroup, IFCModel} from './IFC'
 import { useRef, useState, FormEvent, useEffect, MouseEvent } from 'react';
 import { JSX } from 'react/jsx-runtime';
 import { styled, Stack, Tooltip } from '@mui/material'
@@ -10,6 +10,7 @@ import Foldout from '@pim_platform/components/ifc-viewer/foldout/Foldout.compone
 import FoldoutElement from '@pim_platform/components/ifc-viewer/foldout/FoldoutElement.component'
 
 import Window from '@pim_platform/components/ifc-viewer/window/Window.component'
+import { EventType, useModels } from './ModelProvider.component';
 
 const ModelManager = styled(Window)({
     alignContent: 'center',
@@ -19,87 +20,14 @@ const ModelManager = styled(Window)({
 const ModelManagerComponent = () => {
     const rootRef = useRef<HTMLDivElement>(undefined);
     const containerRef = useRef<HTMLDivElement>(undefined);
-    const [items, setItems] = useState<JSX.Element[]>([]);
-
-    const addModel = (e:CustomEvent<IFCModel>) => {   
-        groupStates.set(e.detail.group.uuid, [true]);
-        e.detail.visible = e.detail.group.visible;
-        e.detail.dispatcher.dispatchEvent({type: 'onVisibilityChanged', isVisible: e.detail.visible})
-
-        setItems((oldItems)=>{
-            var index = oldItems.findIndex((v) => v.props.group.uuid == e.detail.group.uuid)
-        
-            if(index != -1) {                    
-                return oldItems.map((v, i) =>{
-                    if(i != index)
-                        return v;
-                    else {
-                        const children = v.props.children as any[];
-                        const index = children.findIndex((v)=> v.props.ifcModel.ifcID == e.detail.ifcID)
-                        
-                        if(index == -1)
-                            children.push( <ModelItemComponent ifcModel={e.detail}></ModelItemComponent> );
-                        
-                        return <ModelGroupComponent group={e.detail.group}>{children}</ModelGroupComponent>
-                    }
-                })
-            } else {
-                return [...oldItems, 
-                    <ModelGroupComponent group={e.detail.group}>
-                        {[<ModelItemComponent ifcModel={e.detail}></ModelItemComponent>]}
-                    </ModelGroupComponent>
-                ]
-            }
-        })
-    }
-
-    const removeModel = (e:CustomEvent<IFCModel>) => {
-        if(e.detail.group.children.length == 3) {
-            e.detail.group.clear();
-            world.scene.three.remove(e.detail.group);
-        } 
-
-        const index = e.detail.group.ifcModels.findIndex((v)=>v.ifcID == e.detail.ifcID)
-        if(index != -1) {
-            e.detail.group.ifcModels.splice(index, 1)
-        }
-        e.detail.group.remove(e.detail);
-        
-        if(e.detail.group.ifcModels.length > 0)
-            e.detail.group.recaculateBoundingBox();
-
-        setItems((oldItems)=>{
-            var index = oldItems.findIndex((v) => v.props.group.uuid == e.detail.group.uuid)
-
-            if(!oldItems[index].props.children.length || oldItems[index].props.children.length == 1) {
-                groupStates.delete(e.detail.group.uuid)
-                return oldItems.filter((v, i) => i != index)
-            } else {
-                const children = oldItems[index].props.children;
-                const newChildren = children.filter((value:any, index:number) => {
-                    groupStates.get(e.detail.group.uuid).filter((v, i) => i != index) 
-                    return value.props.ifcModel.ifcID != e.detail.ifcID.toString()
-                })
-
-                return oldItems.map((v, i) => {
-                    if(i != index)
-                        return v;
-                    else {
-                        return <ModelGroupComponent group={e.detail.group}>{newChildren}</ModelGroupComponent>;
-                    }
-                })
-            }
-        })
-    }
+   
+    const { models } = useModels()
 
     const mounted = useRef(false);
     useEffect(()=>{
         if(!mounted.current) {
             mounted.current = true;
-            
-            document.addEventListener('onModelAdded', addModel)
-            document.addEventListener('onModelRemoved', removeModel)
-            
+
             document.getElementById('open-model-manager').addEventListener('click', ()=>{
                 if(containerRef.current.parentElement == rootRef.current) 
                     rootRef.current.style.visibility = 'visible';
@@ -110,11 +38,11 @@ const ModelManagerComponent = () => {
     return (
         <ModelManager label='Model Manager' root={rootRef} container={containerRef}>
             {
-                items.length != 0 ?
                 <Stack spacing={1}>
-                    {items} 
+                    {
+                        models.map(model => <ModelItemComponent ifcModel={model}/>)
+                    } 
                 </Stack> 
-                : <></>
             }
         </ModelManager>
     )
@@ -124,14 +52,15 @@ export default ModelManagerComponent;
 
 const ModelItemComponent = (props: {ifcModel: IFCModel})=>{
     const ifcModel = props.ifcModel;
-    const model = ifcModel;
 
     const [visible, setVisibilty] = useState(true);
     const [generalIFCData, setGeneralIFCData] = useState(undefined);
 
-    const openSpatialStructure = () => ifcModel.dispatcher.dispatchEvent({type: 'onSpatialStructure'})
+    const { removeModel, invokeEvent } = useModels()
 
-    const openPropertyTree = ()=> ifcModel.dispatcher.dispatchEvent({type: 'onPropertyTree'}) 
+    const openSpatialStructure = () => invokeEvent(EventType.SpatialStructureOpened, ifcModel)
+
+    const openPropertyTree = ()=> invokeEvent(EventType.PropertyTreeOpened, ifcModel)
 
     const toggleVisibility = (e:MouseEvent<HTMLElement>)=>{
         if(!props.ifcModel.group.visible)
@@ -141,26 +70,25 @@ const ModelItemComponent = (props: {ifcModel: IFCModel})=>{
         const button = e.target as HTMLElement;
         button.innerHTML = !visible ? 'visibility' : 'visibility_off'; 
 
-        props.ifcModel.visible = !visible;
-        ifcModel.dispatcher.dispatchEvent({type: 'onVisibilityChanged', isVisible: !visible});
+        ifcModel.visible = !visible;
+        invokeEvent(EventType.VisibilityChanged, ifcModel)
     }
 
-    const openPlans = ()=> ifcModel.dispatcher.dispatchEvent({type: 'onPlans'}) 
+    const openPlans = () => invokeEvent(EventType.PlansOpened, ifcModel)
 
-    const deleteModel = ()=>{
-        globalThis.onModelRemoved = new CustomEvent<IFCModel>('onModelRemoved', { detail: ifcModel });
-        document.dispatchEvent(global.onModelRemoved);
-        
+    const deleteModel = ()=>{        
         webIFC.CloseModel(ifcModel.ifcID);
 
-        world.scene.three.remove(model)
+        world.scene.three.remove(ifcModel)
         fragmentManager.disposeGroup(ifcModel);
         ifcModel.children.forEach(child=> {
             if(child instanceof FRA.FragmentMesh)
                 world.meshes.delete(child);
         })
 
-        model.dispose();
+        ifcModel.dispose();
+
+        removeModel(ifcModel)
     }
 
     const getGeneralIFCData = async () => {
@@ -263,6 +191,7 @@ const groupStates = new Map<string, boolean[]>();
 
 const ModelGroupComponent = (props: {children: JSX.Element|JSX.Element[], group: IFCGroup}) => {
     const [visible, setVisibilty] = useState(true);
+    const { invokeEvent } = useModels()
 
     const addModelToGroup = (e: FormEvent<HTMLInputElement>, group:IFCGroup)=>{
         const file = e.currentTarget.files[0];
@@ -287,7 +216,7 @@ const ModelGroupComponent = (props: {children: JSX.Element|JSX.Element[], group:
             const states = groupStates.get(props.group.uuid);
             props.group.ifcModels.forEach((ifcModel, i) => {
                 ifcModel.visible = states[i];
-                ifcModel.dispatcher.dispatchEvent({type: 'onVisibilityChanged', isVisible: true});
+                invokeEvent(EventType.VisibilityChanged, ifcModel)
             })
         } else {
             groupStates.set(props.group.uuid, props.group.ifcModels.map(ifcModel => {
@@ -296,7 +225,7 @@ const ModelGroupComponent = (props: {children: JSX.Element|JSX.Element[], group:
 
             props.group.ifcModels.forEach(ifcModel => {
                 ifcModel.visible = false;
-                ifcModel.dispatcher.dispatchEvent({type: 'onVisibilityChanged', isVisible: false});
+                invokeEvent(EventType.VisibilityChanged, ifcModel)
             })
         }
 

@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls'
 import { toolEnabled, Tools } from './Toolbar'
 import { caster, world } from './Components'
-import {IFCGroup, IFCModel} from './IFC'
+import {IFCGroup, IFCModel} from './ifc-model/IFC'
 
 const modelGroups = new Set<IFCGroup>([]);
 

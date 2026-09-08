@@ -1,6 +1,6 @@
 import * as FRA from '@thatopen/fragments'
 import { world, culler, fragmentHider } from './Components'
-import {IFCDispatcher, IFCModel} from '../Viewer/IFC'
+import {IFCDispatcher, IFCModel} from './ifc-model/IFC'
 
 type MeshState = Map<number, boolean>;
 const meshStates = new Map<string, MeshState>();

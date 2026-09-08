@@ -20,26 +20,6 @@ declare module '@mui/material/styles' {
 
 export const theme = createTheme({
   colorSchemes: {
-    // dark: {
-    //   palette: {
-    //     primary: {
-    //       main: '#171717',
-    //     },
-    //     secondary: {
-    //       main: '#141414',
-    //     },
-    //     accent: {
-    //       main: '#8224ed',
-    //     },
-    //     text: {
-    //       primary: '#fff',
-    //     },
-    //     shadow: {
-    //       main: '#000'
-    //     }
-    //   },
-    // },
-
     light: {
       palette: {
         primary: {
@@ -78,7 +58,7 @@ const Root = styled('div')(({theme})=>({
   margin: '0px',
   display: 'flex',
   overflow: 'hidden',
-  backgroundColor: theme.palette.primary.dark,
+  backgroundColor: "#2d2d2d",
   fontFamily: 'Arial, sans-serif',
   flexDirection: 'column',
 }))

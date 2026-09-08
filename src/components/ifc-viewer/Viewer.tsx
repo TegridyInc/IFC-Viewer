@@ -6,11 +6,12 @@ import { useRef, useState, MouseEvent, useEffect, createContext, useContext } fr
 import { BigButton, IconButton } from './inputs/Buttons';
 
 import Container, {culler, world } from './Components';
-import { IFCModel } from './IFC';
+import { IFCModel } from './ifc-model/IFC';
 
 import ToolBar from './Toolbar'
 import Notifications from './notification/Notifications.component';
-import ModelManager from './ifc-model-manager/ModelManager.component';
+import ModelManager from './ifc-model/ModelManager.component';
+import ModelProvider from './ifc-model/ModelProvider.component';
 import PropertyTree from './ifc-property-tree/PropertyTree.component';
 import Properties from './ifc-properties/Properties.component'; 
 import SpatialStructure from './ifc-spatial-structure/SpatialStructure.component'
@@ -241,37 +242,39 @@ export default function Viewer() {
 
     return (     
         <ViewportContext.Provider value={{fullscreen: isFullscreen, minimized: false}}>
-            <Viewport ref={viewportRef} id='viewport' fullscreen={isFullscreen} minimized={isMinimized}>
-                <ViewportLabelContainer className='unselectable' onMouseDown={handleViewport} fullscreen={isFullscreen}>
-                    <ViewerButtonContainer>
-                        
-                    </ViewerButtonContainer>
-                    <ViewportLabel>
-                        IFC Viewer
-                    </ViewportLabel>
-                    <ViewportButtonContainer>
-                        <ViewportButton onClick={toggleMinimize}>minimize</ViewportButton>
-                        <ViewportButton onClick={toggleFullscreen}>{isFullscreen ? 'fullscreen_exit' : 'fullscreen'}</ViewportButton>
-                        <ViewportButton onClick={closeViewport}>close</ViewportButton>
-                    </ViewportButtonContainer>
-                </ViewportLabelContainer>
-                <Container>
-                    <CustomViewportView hidden={!customView}>
-                        <CustomViewportViewLabel>{customViewLabel}</CustomViewportViewLabel>
-                    </CustomViewportView>
-                </Container>
-                <Docker isLeftDocker={false}/>
-                <Docker isLeftDocker={true}/>
-                <ToolBar/>
-            </Viewport>
-            <ViewportMinimized onClick={toggleMinimize} minimized={isMinimized}>IFC Viewer</ViewportMinimized>
-            <Notifications/>
-            <ModelManager/>
-            <PropertyTree/>
-            <Properties/>
-            <SpatialStructure/>
-            <Plans/>
-            <Settings/>
+            <ModelProvider>
+                <Viewport ref={viewportRef} id='viewport' fullscreen={isFullscreen} minimized={isMinimized}>
+                    <ViewportLabelContainer className='unselectable' onMouseDown={handleViewport} fullscreen={isFullscreen}>
+                        <ViewerButtonContainer>
+                            
+                        </ViewerButtonContainer>
+                        <ViewportLabel>
+                            IFC Viewer
+                        </ViewportLabel>
+                        <ViewportButtonContainer>
+                            <ViewportButton onClick={toggleMinimize}>minimize</ViewportButton>
+                            <ViewportButton onClick={toggleFullscreen}>{isFullscreen ? 'fullscreen_exit' : 'fullscreen'}</ViewportButton>
+                            <ViewportButton onClick={closeViewport}>close</ViewportButton>
+                        </ViewportButtonContainer>
+                    </ViewportLabelContainer>
+                    <Container>
+                        <CustomViewportView hidden={!customView}>
+                            <CustomViewportViewLabel>{customViewLabel}</CustomViewportViewLabel>
+                        </CustomViewportView>
+                    </Container>
+                    <Docker isLeftDocker={false}/>
+                    <Docker isLeftDocker={true}/>
+                    <ToolBar/>
+                </Viewport>
+                <ViewportMinimized onClick={toggleMinimize} minimized={isMinimized}>IFC Viewer</ViewportMinimized>
+                <Notifications/>
+                <ModelManager/>
+                <PropertyTree/>
+                <Properties/>
+                <SpatialStructure/>
+                <Plans/>
+                <Settings/>
+            </ModelProvider>
         </ViewportContext.Provider>
     );
 }
