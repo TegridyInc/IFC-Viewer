@@ -23,7 +23,12 @@ module.exports = {
     resolve: {
         extensions: ['.*', '.js', '.jsx', '.tsx', '.ts', '.component.tsx'],
         alias: {
-            '@pim_platform/components': path.resolve(__dirname, 'src/components'),
+            '@ifc_viewer/components': path.resolve(__dirname, 'src/components'),
+            '@ifc_viewer/assets': path.resolve(__dirname, 'src/assets'),
+            '@ifc_viewer/models': path.resolve(__dirname, 'src/models'),
+            '@ifc_viewer/store': path.resolve(__dirname, 'src/store'),
+            '@ifc_viewer/helpers': path.resolve(__dirname, 'src/helpers'),
+            '@ifc_viewer/index': path.resolve(__dirname, 'src/index.tsx'),
             
             fs: false,
             path: false

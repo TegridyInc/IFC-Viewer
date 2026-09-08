@@ -3,11 +3,12 @@
     "outDir": "./dist/",
     "baseUrl": ".",
     "paths": {
-      "@pim_platform/assets/*": ["public/assets/*"],
-      "@pim_platform/components/*": ["src/components/*"],
-      "@pim_platform/models/*": ["src/models/*"],
-      "@pim_platform/store/*": ["src/store/*"],
-      "@pim_platform/helpers/*": ["src/helpers/*"]
+      "@ifc_viewer/assets/*": ["public/assets/*"],
+      "@ifc_viewer/components/*": ["src/components/*"],
+      "@ifc_viewer/models/*": ["src/models/*"],
+      "@ifc_viewer/store/*": ["src/store/*"],
+      "@ifc_viewer/helpers/*": ["src/helpers/*"],
+      "@ifc_viewer/index": ["src/index.tsx"]
     },
     "noImplicitAny": true,
     "module": "esnext",
